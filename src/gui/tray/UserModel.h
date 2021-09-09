@@ -18,6 +18,8 @@
 
 namespace OCC {
 
+class UnifiedSearchResultsListModel;
+
 class User : public QObject
 {
     Q_OBJECT
@@ -62,6 +64,8 @@ public:
     QUrl statusIcon() const;
     QString statusEmoji() const;
     void processCompletedSyncItem(const Folder *folder, const SyncFileItemPtr &item);
+    QString searchTerm() const;
+    void setSearchTerm(const QString &term);
 
 signals:
     void guiLog(const QString &, const QString &);
@@ -111,6 +115,7 @@ private:
     AccountStatePtr _account;
     bool _isCurrentUser;
     ActivityListModel *_activityModel;
+    UnifiedSearchResultsListModel *_unifiedSearchResultsModel;
     ActivityList _blacklistedNotifications;
 
     QTimer _expiredActivitiesCheckTimer;
@@ -118,6 +123,7 @@ private:
     QHash<AccountState *, QElapsedTimer> _timeSinceLastCheck;
 
     QElapsedTimer _guiLogTimer;
+
     NotificationCache _notificationCache;
 
     // number of currently running notification requests. If non zero,
@@ -130,6 +136,8 @@ class UserModel : public QAbstractListModel
     Q_OBJECT
     Q_PROPERTY(User* currentUser READ currentUser NOTIFY newUserSelected)
     Q_PROPERTY(int currentUserId READ currentUserId NOTIFY newUserSelected)
+    Q_PROPERTY(QString searchTerm READ searchTerm)
+
 public:
     static UserModel *instance();
     ~UserModel() override = default;
@@ -144,6 +152,8 @@ public:
     QImage avatarById(const int &id);
 
     User *currentUser() const;
+
+    QString searchTerm() const;
 
     int findUserIdForAccount(AccountState *account) const;
 
@@ -161,6 +171,8 @@ public:
     Q_INVOKABLE void removeAccount(const int &id);
 
     Q_INVOKABLE std::shared_ptr<OCC::UserStatusConnector> userStatusConnector(int id);
+
+    Q_INVOKABLE void onUnifiedSearchTextEdited(const QString &term);
 
     ActivityListModel *currentActivityModel();
 
