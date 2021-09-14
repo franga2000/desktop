@@ -15,6 +15,8 @@
 #ifndef UNIFIEDSEARCHRESULTSLISTMODEL_H
 #define UNIFIEDSEARCHRESULTSLISTMODEL_H
 
+#include "UnifiedSearchResultCategory.h"
+
 #include <QtCore>
 
 namespace OCC {
@@ -54,6 +56,7 @@ private:
     QString _searchTerm;
     QStringList _providers;
     AccountState *_accountState;
+    QList<UnifiedSearchResultCategory> _resultsByCategory;
 };
 }
 
