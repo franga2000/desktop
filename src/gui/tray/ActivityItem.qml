@@ -12,7 +12,6 @@ MouseArea {
     
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 2
         color: (parent.containsMouse ? Style.lightHover : "transparent")
     }
         
@@ -35,7 +34,7 @@ MouseArea {
         Image {
             id: activityIcon
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-            Layout.leftMargin: 8
+            Layout.leftMargin: 20
             Layout.preferredWidth: shareButton.icon.width
             Layout.preferredHeight: shareButton.icon.height
             verticalAlignment: Qt.AlignCenter
@@ -47,13 +46,12 @@ MouseArea {
         
         Column {
             id: activityTextColumn
-            Layout.leftMargin: 8
+            Layout.leftMargin: 14
             Layout.topMargin: 4
             Layout.bottomMargin: 4
             Layout.fillWidth: true
-            Layout.fillHeight: true
             spacing: 4
-            Layout.alignment: Qt.AlignLeft
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
             
             Text {
                 id: activityTextTitle

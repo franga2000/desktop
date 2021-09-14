@@ -553,9 +553,17 @@ Window {
             }
         }   // Rectangle trayWindowHeaderBackground
 
+        SyncStatus {
+            id: progressBar
+
+            anchors.top: trayWindowHeaderBackground.bottom
+            anchors.left: trayWindowBackground.left
+            anchors.right: trayWindowBackground.right
+        }
+
         ListView {
             id: activityListView
-            anchors.top: trayWindowHeaderBackground.bottom
+            anchors.top: progressBar.bottom
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
             anchors.bottom: trayWindowBackground.bottom

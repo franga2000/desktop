@@ -111,6 +111,7 @@ set(client_SRCS
     remotewipe.cpp
     userstatusselectormodel.cpp
     emojimodel.cpp
+    tray/syncstatusmodel.cpp
     tray/ActivityData.cpp
     tray/ActivityListModel.cpp
     tray/UserModel.cpp
