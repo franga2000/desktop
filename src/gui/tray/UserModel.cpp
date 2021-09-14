@@ -596,6 +596,11 @@ ActivityListModel *User::getActivityModel()
     return _activityModel;
 }
 
+UnifiedSearchResultsListModel *User::getUnifiedSearchResultsListModel()
+{
+    return _unifiedSearchResultsModel;
+}
+
 void User::openLocalFolder()
 {
     const auto folder = getFolder();
@@ -1011,6 +1016,14 @@ ActivityListModel *UserModel::currentActivityModel()
         return nullptr;
 
     return _users[currentUserIndex()]->getActivityModel();
+}
+
+UnifiedSearchResultsListModel *UserModel::currentUnifiedSearchResultsModel()
+{
+    if (currentUserIndex() < 0 || currentUserIndex() >= _users.size())
+        return nullptr;
+
+    return _users[currentUserIndex()]->getUnifiedSearchResultsListModel();
 }
 
 void UserModel::fetchCurrentActivityModel()

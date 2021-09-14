@@ -12,5 +12,6 @@
         <file>src/gui/tray/ActivityActionButton.qml</file>
         <file>src/gui/tray/ActivityItem.qml</file>
         <file>src/gui/tray/AutoSizingMenu.qml</file>
+        <file>src/gui/tray/UnifiedSearchResultItem.qml</file>
     </qresource>
 </RCC>

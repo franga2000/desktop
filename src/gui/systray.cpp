@@ -132,6 +132,7 @@ void Systray::create()
     if (_trayEngine) {
         if (!AccountManager::instance()->accounts().isEmpty()) {
             _trayEngine->rootContext()->setContextProperty("activityModel", UserModel::instance()->currentActivityModel());
+            _trayEngine->rootContext()->setContextProperty("unifiedSearchResultsModel", UserModel::instance()->currentUnifiedSearchResultsModel());
         }
         _trayEngine->load(QStringLiteral("qrc:/qml/src/gui/tray/Window.qml"));
     }
@@ -152,6 +153,7 @@ void Systray::slotNewUserSelected()
     if (_trayEngine) {
         // Change ActivityModel
         _trayEngine->rootContext()->setContextProperty("activityModel", UserModel::instance()->currentActivityModel());
+        _trayEngine->rootContext()->setContextProperty("unifiedSearchResultsModel", UserModel::instance()->currentUnifiedSearchResultsModel());
     }
 
     // Rebuild App list

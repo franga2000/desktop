@@ -9,6 +9,7 @@
 #include <QHash>
 
 #include "ActivityListModel.h"
+#include "UnifiedSearchResultsListModel.h"
 #include "accountmanager.h"
 #include "folderman.h"
 #include "NotificationCache.h"
@@ -17,8 +18,6 @@
 #include <chrono>
 
 namespace OCC {
-
-class UnifiedSearchResultsListModel;
 
 class User : public QObject
 {
@@ -44,6 +43,7 @@ public:
     void setCurrentUser(const bool &isCurrent);
     Folder *getFolder() const;
     ActivityListModel *getActivityModel();
+    UnifiedSearchResultsListModel *getUnifiedSearchResultsListModel();
     void openLocalFolder();
     QString name() const;
     QString server(bool shortened = true) const;
@@ -175,6 +175,8 @@ public:
     Q_INVOKABLE void onUnifiedSearchTextEdited(const QString &term);
 
     ActivityListModel *currentActivityModel();
+
+    UnifiedSearchResultsListModel *currentUnifiedSearchResultsModel();
 
     enum UserRoles {
         NameRole = Qt::UserRole + 1,

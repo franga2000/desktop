@@ -42,6 +42,7 @@ set(client_UI_SRCS
     tray/ActivityItem.qml
     tray/Window.qml
     tray/UserLine.qml
+    tray/UnifiedSearchResultItem.qml
     wizard/flow2authwidget.ui
     wizard/owncloudadvancedsetuppage.ui
     wizard/owncloudconnectionmethoddialog.ui

@@ -34,7 +34,20 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
 {
     Q_OBJECT
 
+    class UnifiedSearchProvider
+    {
+    public:
+        QString _id;
+        QString _name;
+        qint32 _order = INT32_MAX;
+    };
+
 public:
+    enum DataRole {
+        NameRole = Qt::UserRole + 1,
+        Subject
+    };
+
     explicit UnifiedSearchResultsListModel(AccountState *accountState, QObject *parent = nullptr);
     ~UnifiedSearchResultsListModel() override;
 
@@ -44,17 +57,20 @@ public:
     void setSearchTerm(const QString &term);
     QString searchTerm() const;
 
+protected:
+    QHash<int, QByteArray> roleNames() const override;
+
 private slots:
     void slotSearchTermEditingFinished();
 
 private:
     void startSearch();
-    void startSearchForProvider(const QString &providerId);
+    void startSearchForProvider(const UnifiedSearchProvider &provider);
 
 private:
     QTimer _unifiedSearchTextEditingFinishedTimer;
     QString _searchTerm;
-    QStringList _providers;
+    QMap<QString, UnifiedSearchProvider> _providers;
     AccountState *_accountState;
     QList<UnifiedSearchResultCategory> _resultsByCategory;
 };
