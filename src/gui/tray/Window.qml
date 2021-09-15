@@ -667,7 +667,7 @@ Window {
         }
         ListView {
             id: activityListView
-            visible: !unifiedSearchResultsListView.visible
+            visible: !unifiedSearchResultsListView.visible && UserModel.searchTerm === ""
             anchors.top: trayWindowUnifiedSearchContainer.bottom
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
@@ -699,7 +699,7 @@ Window {
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
             anchors.bottom: trayWindowBackground.bottom
-            visible: true
+            visible: count > 0
             clip: true
             ScrollBar.vertical: ScrollBar {
                 id: unifiedSearchResultsListViewScrollbar

@@ -28,6 +28,45 @@ UnifiedSearchResultsListModel::UnifiedSearchResultsListModel(AccountState *accou
     : QAbstractListModel(parent)
     , _accountState(accountState)
 {
+    beginInsertRows(QModelIndex(), 0, 5);
+    UnifiedSearchResult filesCategorySeparator;
+    filesCategorySeparator._categoryId = "files";
+    filesCategorySeparator._categoryName = "Files";
+    filesCategorySeparator._isCategorySeparator = true;
+    _resultsCombined.push_back(filesCategorySeparator);
+
+    UnifiedSearchResult fakeFileResult;
+    fakeFileResult._title = "Fake file result";
+    fakeFileResult._subline = "Subline for Fake file result";
+    fakeFileResult._categoryId = "files";
+    fakeFileResult._categoryName = "Files";
+
+    UnifiedSearchResult fetchMoreFileResultsTrigger;
+    fetchMoreFileResultsTrigger._categoryId = "files";
+    fetchMoreFileResultsTrigger._isFetchMoreTrigger = true;
+
+    _resultsCombined.push_back(fakeFileResult);
+    _resultsCombined.push_back(fetchMoreFileResultsTrigger);
+
+    UnifiedSearchResult talkMessagesCategorySeparator;
+    talkMessagesCategorySeparator._categoryId = "talk_messages";
+    talkMessagesCategorySeparator._categoryName = "Messages";
+    talkMessagesCategorySeparator._isCategorySeparator = true;
+    _resultsCombined.push_back(talkMessagesCategorySeparator);
+
+    UnifiedSearchResult fakeTalkMessagesResult;
+    fakeTalkMessagesResult._title = "Fake Talk messages result";
+    fakeTalkMessagesResult._subline = "Subline for Fake Talk messages result";
+    fakeTalkMessagesResult._categoryId = "talk_messages";
+    fakeTalkMessagesResult._categoryName = "Messages";
+
+    UnifiedSearchResult fetchMoreTalkMessagesTrigger;
+    fetchMoreTalkMessagesTrigger._categoryId = "talk_messages";
+    fetchMoreTalkMessagesTrigger._isFetchMoreTrigger = true;
+
+    _resultsCombined.push_back(fakeTalkMessagesResult);
+    _resultsCombined.push_back(fetchMoreTalkMessagesTrigger);
+    endInsertRows();
 }
 
 UnifiedSearchResultsListModel::~UnifiedSearchResultsListModel()
@@ -38,50 +77,28 @@ UnifiedSearchResultsListModel::~UnifiedSearchResultsListModel()
 
 QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role) const
 {
-    if (index.row() >= rowCount()) {
+    if (index.row() < 0 || index.row() >= _resultsCombined.size()) {
         return QVariant();
     }
 
-    int categoryIndex = -1;
-    int indexInCategory = -1;
-
-    int currentTotal = 0;
-
-    for (const auto &category : _resultsByCategory) {
-        ++categoryIndex;
-        currentTotal += category._results.size();
-
-        if (currentTotal <= index.row()) {
-            break;
-        }
+    switch (role) {
+    case CategoryNameRole: {
+        return _resultsCombined.at(index.row())._categoryName;
     }
-
-    if (currentTotal < index.row()) {
-        categoryIndex = -1;
+    case TitleRole: {
+        return _resultsCombined.at(index.row())._title;
     }
-
-    if (categoryIndex != -1) {
-
-        int inrermediate = currentTotal - index.row();
-
-        indexInCategory = _resultsByCategory.at(categoryIndex)._results.size() - inrermediate;
+    case SublineRole: {
+        return _resultsCombined.at(index.row())._subline;
     }
-
-    switch(role) {
-    case NameRole: {
-        const auto row = index.row();
-        if (categoryIndex < 0 || categoryIndex >= _resultsByCategory.size()) {
-            return QVariant();
-        }
-
-        if (indexInCategory < 0 || indexInCategory >= _resultsByCategory.at(categoryIndex)._results.size()) {
-            return QVariant();
-        }
-        return _resultsByCategory.at(indexInCategory)._results.at(indexInCategory)._title;
+    case ThumbnailUrlRole: {
+        return _resultsCombined.at(index.row())._thumbnailUrl;
     }
-    case Subject: {
-        const auto row = index.row();
-        return QString(_resultsByCategory.at(0)._name + QString("_") + QString(row));
+    case IsFetchMoreTrigger: {
+        return _resultsCombined.at(index.row())._isFetchMoreTrigger;
+    }
+    case IsCategorySeparator: {
+        return _resultsCombined.at(index.row())._isCategorySeparator;
     }
     }
 
@@ -90,20 +107,18 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
 
 int UnifiedSearchResultsListModel::rowCount(const QModelIndex &) const
 {
-    int total = 0;
-
-    for (const auto &category : _resultsByCategory) {
-        total += category._results.size();
-    }
-
-    return total;
+    return _resultsCombined.size();
 }
 
 QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[NameRole] = "name";
-    roles[Subject] = "subject";
+    roles[CategoryNameRole] = "categoryName";
+    roles[TitleRole] = "resultTitle";
+    roles[SublineRole] = "subline";
+    roles[ThumbnailUrlRole] = "thumbnailUrl";
+    roles[IsFetchMoreTrigger] = "isFetchMoreTrigger";
+    roles[IsCategorySeparator] = "isCategorySeparator";
     return roles;
 }
 
@@ -128,6 +143,7 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
     } else {
         beginResetModel();
         _resultsByCategory.clear();
+        _resultsCombined.clear();
         endResetModel();
     }
 }
@@ -172,6 +188,7 @@ void UnifiedSearchResultsListModel::startSearch()
 {
     beginResetModel();
     _resultsByCategory.clear();
+    _resultsCombined.clear();
     endResetModel();
 
     for (const auto& provider : _providers) {
@@ -196,22 +213,54 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
 
             if (providerForResults != _providers.end() && !entries.isEmpty()) {
                 UnifiedSearchResultCategory category;
-                category._order = (*providerForResults)._order;
+                category._id = (*providerForResults)._id;
                 category._name = (*providerForResults)._name;
+                category._order = (*providerForResults)._order;
 
                 for (const auto &entry : entries) {
                     UnifiedSearchResult result;
+                    result._categoryId = category._id;
+                    result._categoryName = category._name;
+                    result._order = category._order;
                     result._title = entry.toMap()["title"].toString();
+                    result._subline = entry.toMap()["subline"].toString();
+                    result._resourceUrl = entry.toMap()["resourceUrl"].toString();
+                    result._thumbnailUrl = entry.toMap()["thumbnailUrl"].toString();
                     category._results.push_back(result);
                 }
 
-                beginInsertRows(QModelIndex(), 0, category._results.size() - 1);
-                _resultsByCategory.push_back(category);
-                endInsertRows();
+                _resultsByCategory.insert((*providerForResults)._id, category);
+
+                combineResults();
             }
         }
     });
     job->start();
+}
+void UnifiedSearchResultsListModel::combineResults()
+{
+    QList<UnifiedSearchResult> resultsCombined;
+    for (const auto &category : _resultsByCategory) {
+        if (category._results.isEmpty()) {
+            continue;
+        }
+        UnifiedSearchResult categorySeparator;
+        categorySeparator._categoryId = category._id;
+        categorySeparator._categoryName = category._name;
+        categorySeparator._isCategorySeparator = true;
+        resultsCombined.push_back(categorySeparator);
+
+        resultsCombined.append(category._results);
+
+        UnifiedSearchResult fetchMoreTrigger;
+        fetchMoreTrigger._categoryId = category._id;
+        fetchMoreTrigger._categoryName = category._name;
+        fetchMoreTrigger._isFetchMoreTrigger = true;
+        resultsCombined.push_back(fetchMoreTrigger);
+    }
+    beginInsertRows(QModelIndex(), 0, resultsCombined.size() - 1);
+    _resultsCombined = resultsCombined;
+    endInsertRows();
 }
 
 }

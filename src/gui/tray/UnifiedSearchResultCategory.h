@@ -33,8 +33,9 @@ class UnifiedSearchResultCategory
     Q_PROPERTY(QList<UnifiedSearchResult> results MEMBER _results)
 
 public:
-    qint32 _order;
+    QString _id;
     QString _name;
+    qint32 _order;
     QList<UnifiedSearchResult> _results;
 };
 

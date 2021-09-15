@@ -44,8 +44,12 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
 
 public:
     enum DataRole {
-        NameRole = Qt::UserRole + 1,
-        Subject
+        CategoryNameRole = Qt::UserRole + 1,
+        TitleRole,
+        SublineRole,
+        ThumbnailUrlRole,
+        IsFetchMoreTrigger,
+        IsCategorySeparator
     };
 
     explicit UnifiedSearchResultsListModel(AccountState *accountState, QObject *parent = nullptr);
@@ -67,12 +71,15 @@ private:
     void startSearch();
     void startSearchForProvider(const UnifiedSearchProvider &provider);
 
+    void combineResults();
+
 private:
     QTimer _unifiedSearchTextEditingFinishedTimer;
     QString _searchTerm;
     QMap<QString, UnifiedSearchProvider> _providers;
     AccountState *_accountState;
-    QList<UnifiedSearchResultCategory> _resultsByCategory;
+    QMap<QString, UnifiedSearchResultCategory> _resultsByCategory;
+    QList<UnifiedSearchResult> _resultsCombined;
 };
 }
 
