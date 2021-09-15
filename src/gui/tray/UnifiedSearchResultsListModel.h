@@ -45,8 +45,10 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
 public:
     enum DataRole {
         CategoryNameRole = Qt::UserRole + 1,
+        CategoryIdRole,
         TitleRole,
         SublineRole,
+        ResourceUrlRole,
         ThumbnailUrlRole,
         IsFetchMoreTrigger,
         IsCategorySeparator
@@ -60,6 +62,8 @@ public:
 
     void setSearchTerm(const QString &term);
     QString searchTerm() const;
+
+    Q_INVOKABLE void resultClicked(int resultIndex);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

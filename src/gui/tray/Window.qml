@@ -715,6 +715,7 @@ Window {
             delegate: UnifiedSearchResultItem {
                 width: unifiedSearchResultsListView.width
                 height: Style.trayWindowHeaderHeight
+                onClicked: unifiedSearchResultsModel.resultClicked(model.index)
             }
         }
     }       // Rectangle trayWindowBackground

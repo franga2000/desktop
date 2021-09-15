@@ -7,7 +7,7 @@ import com.nextcloud.desktopclient 1.0
 
 MouseArea {
     id: unifiedSearchResultMouseArea
-    hoverEnabled: true
+    hoverEnabled: !model.isCategorySeparator
     anchors.fill: unifiedSearchResultItem
     
     Rectangle {
@@ -33,60 +33,62 @@ MouseArea {
 
             Column {
                 id: unifiedSearchResultLeftColumn
-
+                visible: model.thumbnailUrl
                 Layout.leftMargin: 8
                 Layout.topMargin: 8
                 Layout.bottomMargin: 8
                 spacing: 4
                 Image {
                     id: unifiedSearchResultThumbnail
+                    visible: parent.visible
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                    Layout.preferredWidth: shareButton.icon.width
-                    Layout.preferredHeight: shareButton.icon.height
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
                     verticalAlignment: Qt.AlignCenter
                     cache: true
-                    source: model.thumbnailUrl ? model.thumbnailUrl : "qrc:///client/theme/share.svg"
-                    sourceSize.height: Style.trayWindowHeaderHeight
-                    sourceSize.width: Style.trayWindowHeaderHeight
+                    asynchronous: true
+                    source: model.thumbnailUrl
+                    sourceSize.height: 64
+                    sourceSize.width: 64
                 }
             }
 
             Column {
                 id: unifiedSearchResultRightColumn
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.leftMargin: 8
                 Layout.topMargin: 8
                 Layout.bottomMargin: 8
                 spacing: 4
                 ColumnLayout {
+                    spacing: 2
                     Rectangle {
-                        Layout.preferredHeight: unifiedSearchResultRightColumn.height / 2
+                        Layout.preferredHeight: Style.trayWindowHeaderHeight / 2
+                        Layout.fillWidth: true
+
                         Text {
                             id: unifiedSearchResultTitleText
                             text: model.resultTitle
-                            anchors.top: parent.top
                             visible: parent.visible
                             width: parent.width
                             font.pixelSize: Style.topLinePixelSize
-                            color: "red"
+                            color: "black"
                         }
                     }
-
                     Rectangle {
-                        Layout.preferredHeight: unifiedSearchResultRightColumn.height / 2 - unifiedSearchResultTextSubline.height
-
+                        Layout.preferredHeight: Style.trayWindowHeaderHeight / 2
+                        Layout.fillWidth: true
                         Text {
                             id: unifiedSearchResultTextSubline
                             text: model.subline
-                            anchors.bottom: parent.bottom
                             visible: parent.visible
                             width: parent.width
-                            font.pixelSize: Style.topLinePixelSize
+                            font.pixelSize: Style.subLinePixelSize
                             color: "grey"
                         }
                     }
-
-
                 }
 
 
@@ -100,28 +102,25 @@ MouseArea {
 
             width: model.isFetchMoreTrigger ? unifiedSearchResultMouseArea.width : 0
             height: model.isFetchMoreTrigger ? Style.trayWindowHeaderHeight : 0
-            spacing: 2
 
             Accessible.role: Accessible.ListItem
-            Accessible.name: "Fetch more items"
+            Accessible.name: qsTr("Load more results")
             Accessible.onPressAction: unifiedSearchResultMouseArea.clicked()
 
             Column {
                 id: unifiedSearchResultItemFetchMoreColumn
                 visible: model.isFetchMoreTrigger
-                Layout.leftMargin: 8
-                Layout.topMargin: 4
-                Layout.bottomMargin: 4
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 4
-                Layout.alignment: Qt.AlignLeft
 
                 Text {
                     id: unifiedSearchResultItemFetchMoreText
-                    text: "Fetch more..."
+                    text: qsTr("Load more results")
                     visible: parent.visible
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     width: parent.width
+                    height: parent.height
                     font.pixelSize: Style.topLinePixelSize
                     color: "grey"
                 }
@@ -137,7 +136,7 @@ MouseArea {
             spacing: 2
 
             Accessible.role: Accessible.ListItem
-            Accessible.name: "Category separator."
+            Accessible.name: qsTr("Category separator")
             Accessible.onPressAction: unifiedSearchResultMouseArea.clicked()
 
             Column {
@@ -156,8 +155,8 @@ MouseArea {
                     text: model.categoryName
                     visible: parent.visible
                     width: parent.width
-                    font.pixelSize: Style.topLinePixelSize
-                    color: "blue"
+                    font.pixelSize: Style.topLinePixelSize * 1.5
+                    color: Style.ncBlue
                 }
             }
         }

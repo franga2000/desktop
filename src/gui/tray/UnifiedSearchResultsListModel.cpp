@@ -16,6 +16,7 @@
 
 #include "account.h"
 #include "accountstate.h"
+#include "guiutility.h"
 #include "networkjobs.h"
 
 #include <algorithm>
@@ -85,6 +86,9 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     case CategoryNameRole: {
         return _resultsCombined.at(index.row())._categoryName;
     }
+    case CategoryIdRole: {
+        return _resultsCombined.at(index.row())._categoryId;
+    }
     case TitleRole: {
         return _resultsCombined.at(index.row())._title;
     }
@@ -93,6 +97,9 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     }
     case ThumbnailUrlRole: {
         return _resultsCombined.at(index.row())._thumbnailUrl;
+    }
+    case ResourceUrlRole: {
+        return _resultsCombined.at(index.row())._resourceUrl;
     }
     case IsFetchMoreTrigger: {
         return _resultsCombined.at(index.row())._isFetchMoreTrigger;
@@ -114,8 +121,10 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[CategoryNameRole] = "categoryName";
+    roles[CategoryIdRole] = "categoryId";
     roles[TitleRole] = "resultTitle";
     roles[SublineRole] = "subline";
+    roles[ResourceUrlRole] = "resourceUrl";
     roles[ThumbnailUrlRole] = "thumbnailUrl";
     roles[IsFetchMoreTrigger] = "isFetchMoreTrigger";
     roles[IsCategorySeparator] = "isCategorySeparator";
@@ -151,6 +160,35 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
 QString UnifiedSearchResultsListModel::searchTerm() const
 {
     return _searchTerm;
+}
+
+void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
+{
+    if (resultIndex < 0 || resultIndex >= _resultsCombined.size()) {
+        return;
+    }
+
+    const auto modelIndex = index(resultIndex);
+
+    const auto categoryId = data(modelIndex, CategoryIdRole).toString();
+    const auto categoryInfo = _resultsByCategory.value(categoryId, UnifiedSearchResultCategory());
+
+    if (!categoryInfo._id.isEmpty() && categoryInfo._id == categoryId) {
+        const auto isFetchMoreTrigger = data(modelIndex, IsFetchMoreTrigger).toBool();
+
+        if (isFetchMoreTrigger) {
+            if (categoryInfo._isPaginated) {
+                // Load more items here
+                int a = 5;
+                a = 6;
+            }
+        } else {
+            const auto resourceUrl = QUrl(data(modelIndex, ResourceUrlRole).toString());
+            if (resourceUrl.isValid()) {
+                Utility::openBrowser(resourceUrl);
+            }
+        }
+    }
 }
 
 void UnifiedSearchResultsListModel::slotSearchTermEditingFinished()
@@ -216,6 +254,8 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
                 category._id = (*providerForResults)._id;
                 category._name = (*providerForResults)._name;
                 category._order = (*providerForResults)._order;
+                category._isPaginated = isPaginated;
+                category._cursor = cursor;
 
                 for (const auto &entry : entries) {
                     UnifiedSearchResult result;
@@ -258,6 +298,10 @@ void UnifiedSearchResultsListModel::combineResults()
         fetchMoreTrigger._isFetchMoreTrigger = true;
         resultsCombined.push_back(fetchMoreTrigger);
     }
+    beginResetModel();
+    _resultsCombined.clear();
+    endResetModel();
+
     beginInsertRows(QModelIndex(), 0, resultsCombined.size() - 1);
     _resultsCombined = resultsCombined;
     endInsertRows();
