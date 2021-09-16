@@ -699,6 +699,7 @@ Window {
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
             anchors.bottom: trayWindowBackground.bottom
+            spacing: 4
             visible: count > 0
             clip: true
             ScrollBar.vertical: ScrollBar {
@@ -714,7 +715,7 @@ Window {
 
             delegate: UnifiedSearchResultItem {
                 width: unifiedSearchResultsListView.width
-                height: Style.trayWindowHeaderHeight
+                defaultHeight: Style.trayWindowHeaderHeight
                 onClicked: unifiedSearchResultsModel.resultClicked(model.index)
             }
         }
