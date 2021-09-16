@@ -15,11 +15,7 @@
 #ifndef ICONJOB_H
 #define ICONJOB_H
 
-#include <QObject>
-#include <QByteArray>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
+#include "abstractnetworkjob.h"
 
 namespace OCC {
 
@@ -27,20 +23,29 @@ namespace OCC {
  * @brief Job to fetch a icon
  * @ingroup gui
  */
-class IconJob : public QObject
+class IconJob : public AbstractNetworkJob
 {
     Q_OBJECT
 public:
-    explicit IconJob(const QUrl &url, QObject *parent = nullptr);
+    explicit IconJob(AccountPtr account, const QUrl &url, QObject *parent = nullptr);
 
+public slots:
+    void start() override;
 signals:
-    void jobFinished(QByteArray iconData);
-
+    /**
+     * @param statusCode the HTTP status code
+     * @param reply the content of the reply
+     *
+     * Signal that the job is done. If the statusCode is 200 (success) reply
+     * will contain the image data in PNG. If the status code is different the content
+     * of reply is undefined.
+     */
+    void jobFinished(int statusCode, QByteArray reply);
 private slots:
-    void finished(QNetworkReply *reply);
+    bool finished() override;
 
-private:
-    QNetworkAccessManager _accessManager;
+    private:
+    QUrl _iconUrl;
 };
 }
 

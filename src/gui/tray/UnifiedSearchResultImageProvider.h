@@ -1,5 +1,5 @@
 /*
- * Copyright (C) by Camila Ayres <hello@camila.codes>
+ * Copyright (C) by Oleksandr Zolotov <alex@nextcloud.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,25 +12,27 @@
  * for more details.
  */
 
-#include "iconjob.h"
+#ifndef UNIFIEDSEARCHRESULTIMAGEPROVIDER_H
+#define UNIFIEDSEARCHRESULTIMAGEPROVIDER_H
+
+#include <QtCore>
+#include <QQuickImageProvider>
 
 namespace OCC {
 
-IconJob::IconJob(AccountPtr account, const QUrl &url, QObject *parent)
-    : AbstractNetworkJob(account, QString(), parent)
-    , _iconUrl(url)
+/**
+ * @brief The UnifiedSearchResultImageProvider
+ * @ingroup gui
+ */
+
+class UnifiedSearchResultImageProvider : public QQuickAsyncImageProvider
 {
+public:
+    QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
+
+private:
+    QThreadPool pool;
+};
 }
 
-void IconJob::start()
-{
-    sendRequest("GET", _iconUrl);
-    AbstractNetworkJob::start();
-}
-
-bool IconJob::finished()
-{
-    emit jobFinished(reply()->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), reply()->readAll());
-    return true;
-}
-}
+#endif // UNIFIEDSEARCHRESULTIMAGEPROVIDER_H

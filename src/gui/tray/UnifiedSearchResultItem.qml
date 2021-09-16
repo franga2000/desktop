@@ -33,7 +33,6 @@ MouseArea {
 
             Column {
                 id: unifiedSearchResultLeftColumn
-                visible: model.thumbnailUrl
                 Layout.leftMargin: 8
                 Layout.topMargin: 8
                 Layout.bottomMargin: 8
@@ -45,11 +44,10 @@ MouseArea {
                     Layout.preferredWidth: 16
                     Layout.preferredHeight: 16
                     verticalAlignment: Qt.AlignCenter
-                    cache: true
                     asynchronous: true
-                    source: model.thumbnailUrl
-                    sourceSize.height: 64
-                    sourceSize.width: 64
+                    source: "image://unified-search-result-image/" + model.thumbnailUrl
+                    sourceSize.height: 16
+                    sourceSize.width: 16
                 }
             }
 
