@@ -143,6 +143,8 @@ private:
         }
     };
 
+    bool checkForInvalidFileName(const SyncFileItemPtr &item);
+
     /** Iterate over entries inside the directory (non-recursively).
      *
      * Called once _serverEntries and _localEntries are filled

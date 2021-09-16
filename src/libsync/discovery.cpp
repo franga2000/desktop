@@ -15,9 +15,12 @@
 #include "discovery.h"
 #include "common/filesystembase.h"
 #include "common/syncjournaldb.h"
+#include "filesystem.h"
 #include "syncfileitem.h"
 #include <QDebug>
 #include <algorithm>
+#include <QEventLoop>
+#include <QDir>
 #include <set>
 #include <QTextCodec>
 #include "vio/csync_vio_local.h"
@@ -33,6 +36,61 @@
 namespace OCC {
 
 Q_LOGGING_CATEGORY(lcDisco, "sync.discovery", QtInfoMsg)
+
+bool ProcessDirectoryJob::checkForInvalidFileName(const SyncFileItemPtr &item)
+{
+    const QString folderPath = _discoveryData->_localDir;
+
+    const auto originalFilePathSyncFolder = item->_file;
+    auto slashPosition = originalFilePathSyncFolder.lastIndexOf('/');
+    const auto originalFileParentPathSyncFolder = slashPosition >= 0 ? originalFilePathSyncFolder.left(slashPosition) : QString();
+    const auto newFileName = originalFilePathSyncFolder.mid(slashPosition + 1).trimmed();
+    const QString originalFilePathAbsolute = folderPath + item->_file;
+    slashPosition = originalFilePathAbsolute.lastIndexOf('/');
+    const auto orignalFileParentPathAbsolute = originalFilePathAbsolute.left(slashPosition);
+    const QString newFilePathAbsolute = orignalFileParentPathAbsolute + QStringLiteral("/") + newFileName;
+
+    if (newFilePathAbsolute != originalFilePathAbsolute) {
+        QFileInfo newFileInfo(newFilePathAbsolute);
+
+        // Check if the file exists locally
+        if (newFileInfo.exists()) {
+            item->_instruction = CSYNC_INSTRUCTION_ERROR;
+            item->_status = SyncFileItem::NormalError;
+            item->_errorString = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists.");
+            return false;
+        }
+
+        // Check if remote file exists
+        QEventLoop loop;
+        auto remoteFileWithNewNameExists = true;
+        const auto propfindJob = new PropfindJob(_discoveryData->_account, QDir::cleanPath(_discoveryData->_remoteFolder + _currentFolder._local + newFileName));
+        connect(propfindJob, &PropfindJob::result, &loop, [&remoteFileWithNewNameExists, &loop](const QVariantMap &) {
+            remoteFileWithNewNameExists = true;
+            loop.quit();
+        });
+        connect(propfindJob, &PropfindJob::finishedWithError, &loop, [&remoteFileWithNewNameExists, &loop](QNetworkReply *) {
+            remoteFileWithNewNameExists = false;
+            loop.quit();
+        });
+        propfindJob->start();
+        loop.exec();
+        if (remoteFileWithNewNameExists) {
+            item->_instruction = CSYNC_INSTRUCTION_ERROR;
+            item->_status = SyncFileItem::NormalError;
+            item->_errorString = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists on the server.");
+            return false;
+        }
+
+        // Store the information for the upload job
+        const QString newFilePathSyncFolder = originalFileParentPathSyncFolder.isEmpty()
+            ? newFileName
+            : originalFileParentPathSyncFolder + QStringLiteral("/") + newFileName;
+        item->_renameTarget = newFilePathSyncFolder;
+    }
+
+    return true;
+}
 
 void ProcessDirectoryJob::start()
 {
@@ -941,6 +999,11 @@ void ProcessDirectoryJob::processFileAnalyzeLocalInfo(
     item->_modtime = localEntry.modtime;
     item->_type = localEntry.isDirectory ? ItemTypeDirectory : localEntry.isVirtualFile ? ItemTypeVirtualFile : ItemTypeFile;
     _childModified = true;
+
+    if (!checkForInvalidFileName(item)) {
+        emit _discoveryData->itemDiscovered(item);
+        return;
+    }
 
     auto postProcessLocalNew = [item, localEntry, path, this]() {
         // TODO: We may want to execute the same logic for non-VFS mode, as, moving/renaming the same folder by 2 or more clients at the same time is not possible in Web UI.
