@@ -15,85 +15,35 @@
 #include "UnifiedSearchResultImageProvider.h"
 
 #include "accountmanager.h"
-#include "iconjob.h"
 
 #include "tray/UserModel.h"
 
 #include <QImage>
-#include <QThreadPool>
 
 namespace OCC {
-
-class AsyncImageResponseRunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-signals:
-    void done(QImage image);
-
-public:
-    AsyncImageResponseRunnable(const QString &id, const QSize &requestedSize)
-        : m_id(id)
-        , m_requestedSize(requestedSize)
-    {
-    }
-
-    void run() override
-    {
-        const QUrl iconUrl = QUrl(m_id);
-
-        if (!iconUrl.isValid() || iconUrl.scheme().isEmpty()) {
-            emit done(QImage());
-            return;
-        }
-
-        auto image = QImage(16, 16, QImage::Format_ARGB32);
-
-        QEventLoop loop;
-        auto *iconJob = new IconJob(_account, iconUrl, this);
-        connect(iconJob, &IconJob::jobFinished, this, [&loop, &image](int statusCode, const QByteArray reply) {
-            if (statusCode == 200) {
-                image = QImage::fromData(reply);
-                bool isValid = !image.isNull();
-            }
-            loop.quit();
-        });
-        iconJob->start();
-        loop.exec();
-        emit done(image);
-    }
-
-    void setAccount(AccountPtr acount)
-    {
-        _account = acount;
-    }
-
-private:
-    QString m_id;
-    AccountPtr _account;
-    QSize m_requestedSize;
-};
 
 class AsyncImageResponse : public QQuickImageResponse
 {
 public:
-    AsyncImageResponse()
+    AsyncImageResponse(const QString &id, const QSize &requestedSize)
+        : _account(UserModel::instance()->currentUser()->account())
     {
-    }
+        const QUrl iconUrl = QUrl(id);
 
-    void init(const QString &id, const QSize &requestedSize, QThreadPool *pool)
-    {
-        auto runnable = new AsyncImageResponseRunnable(id, requestedSize);
-        if (_account) {
-            runnable->setAccount(_account);
+        if (!iconUrl.isValid() || iconUrl.scheme().isEmpty()) {
+            handleDone(QImage());
+            return;
         }
-        connect(runnable, &AsyncImageResponseRunnable::done, this, &AsyncImageResponse::handleDone);
-        pool->start(runnable);
+
+        auto reply = _account->sendRawRequest("GET",  iconUrl);
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            handleDone(QImage::fromData(reply->readAll()));
+        });
     }
 
-    void setAccount(AccountPtr acount)
+    ~AsyncImageResponse() override
     {
-        _account = acount;
+
     }
 
     void handleDone(QImage image)
@@ -107,18 +57,13 @@ public:
         return QQuickTextureFactory::textureFactoryForImage(m_image);
     }
 
-    QImage m_image;
-
     AccountPtr _account;
+    QImage m_image;
 };
 
 QQuickImageResponse *UnifiedSearchResultImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    AsyncImageResponse *response = new AsyncImageResponse;
-    if (UserModel::instance()->currentUser()) {
-        response->setAccount(UserModel::instance()->currentUser()->account());
-    }
-    response->init(id, requestedSize, &pool);
+    AsyncImageResponse *response = new AsyncImageResponse(id, requestedSize);
     return response;
 }
 
