@@ -97,6 +97,9 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     case ResourceUrlRole: {
         return _resultsCombined.at(index.row())._resourceUrl;
     }
+    case RoundedRole: {
+        return _resultsCombined.at(index.row())._isRounded;
+    }
     case TypeRole: {
         return _resultsCombined.at(index.row())._type;
     }
@@ -121,6 +124,7 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
     roles[ResourceUrlRole] = "resourceUrl";
     roles[ThumbnailUrlRole] = "thumbnailUrl";
     roles[TypeRole] = "type";
+    roles[RoundedRole] = "isRounded";
     return roles;
 }
 
@@ -254,6 +258,7 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                 result._categoryId = category._id;
                 result._categoryName = category._name;
                 result._icon = entry.toMap()["icon"].toString();
+                result._isRounded = category._id.contains("mail") || category._id.contains("talk") || category._id.contains("comments");
                 result._order = category._order;
                 result._title = entry.toMap()["title"].toString();
                 result._subline = entry.toMap()["subline"].toString();
