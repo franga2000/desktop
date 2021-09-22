@@ -55,7 +55,7 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
 
                 if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
                     if (const auto currentUser = UserModel::instance()->currentUser()) {
-                        return QString(currentUser->server(false) + "/" + resultInfo._icon);
+                        return QString(currentUser->server(false) + resultInfo._icon);
                     }
                 }
             }
@@ -80,7 +80,19 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
         return _resultsCombined.at(index.row())._subline;
     }
     case ThumbnailUrlRole: {
-        return _resultsCombined.at(index.row())._thumbnailUrl;
+        const auto resultInfo = _resultsCombined.at(index.row());
+
+        if (resultInfo._thumbnailUrl.contains(QStringLiteral("/"))) {
+            const QUrl urlForIcon(resultInfo._thumbnailUrl);
+
+            if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
+                if (const auto currentUser = UserModel::instance()->currentUser()) {
+                    return QString(currentUser->server(false) + resultInfo._thumbnailUrl);
+                }
+            }
+        }
+
+        return resultInfo._thumbnailUrl;
     }
     case ResourceUrlRole: {
         return _resultsCombined.at(index.row())._resourceUrl;
