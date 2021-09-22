@@ -469,11 +469,14 @@ void ShareLinkWidget::slotAnimationFinished()
 
 void ShareLinkWidget::slotCreateLabel()
 {
-    if (_linkShare) {
-        slotToggleButtonAnimation(_shareLinkButton, _shareLinkProgressIndicator, true, true);
-        _ui->errorLabel->hide();
-        _linkShare->setLabel(_shareLinkEdit->text());
+    const auto label = _shareLinkEdit->text();
+    if (!_linkShare || _linkShare->getLabel() == label || label.isEmpty()) {
+        return;
     }
+    
+    slotToggleButtonAnimation(_shareLinkButton, _shareLinkProgressIndicator, true, true);
+    _ui->errorLabel->hide();
+    _linkShare->setLabel(_shareLinkEdit->text());
 }
 
 void ShareLinkWidget::slotLabelSet()
