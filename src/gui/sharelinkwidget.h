@@ -113,7 +113,6 @@ private:
 
     void showNoteOptions(bool show);
     void toggleNoteOptions(bool enable);
-    void setNote(const QString &note);
 
     void showExpireDateOptions(bool show);
     void toggleExpireDateOptions(bool enable);

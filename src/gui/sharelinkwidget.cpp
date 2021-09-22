@@ -327,18 +327,16 @@ void ShareLinkWidget::setupUiOptions()
     customizeStyle();
 }
 
-void ShareLinkWidget::setNote(const QString &note)
-{
-    if (_linkShare) {
-        slotToggleButtonAnimation(_ui->confirmNote, _ui->noteProgressIndicator, _noteLinkAction->isChecked(), true);
-        _ui->errorLabel->hide();
-        _linkShare->setNote(note);
-    }
-}
-
 void ShareLinkWidget::slotCreateNote()                                                                              
 {
-    setNote(_ui->textEdit_note->toPlainText());
+    const auto note = _ui->textEdit_note->toPlainText();
+    if (!_linkShare || _linkShare->getNote() == note || note.isEmpty()) {
+        return;
+    }
+    
+    slotToggleButtonAnimation(_ui->confirmNote, _ui->noteProgressIndicator, _noteLinkAction->isChecked(), true);
+    _ui->errorLabel->hide();
+    _linkShare->setNote(note);
 }
 
 void ShareLinkWidget::slotNoteSet()
