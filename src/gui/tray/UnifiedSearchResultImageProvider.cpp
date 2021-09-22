@@ -14,7 +14,7 @@
 
 #include "UnifiedSearchResultImageProvider.h"
 
-#include "tray/UserModel.h"
+#include "UserModel.h"
 
 #include <QImage>
 

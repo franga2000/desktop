@@ -43,12 +43,12 @@ MouseArea {
 
         ColumnLayout {
             id: unifiedSearchResultImageContainer
-            visible: model.thumbnailUrl
+            visible: true
             Layout.preferredWidth: visible ? Layout.preferredHeight : 0
             Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight : 0
             Image {
                 id: unifiedSearchResultThumbnail
-                visible: !unifiedSearchResultThumbnailPlaceholder.visible
+                visible: !unifiedSearchResultIcon.visible
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: contentLeftMargin
                 verticalAlignment: Qt.AlignCenter
@@ -59,6 +59,20 @@ MouseArea {
                 sourceSize.height: model.thumbnailUrl ? Style.trayWindowHeaderHeight : 0
                 Layout.preferredWidth: model.thumbnailUrl ? Style.trayWindowHeaderHeight : 0
                 Layout.preferredHeight: model.thumbnailUrl ? Style.trayWindowHeaderHeight : 0
+            }
+            Image {
+                id: unifiedSearchResultIcon
+                visible: !unifiedSearchResultThumbnailPlaceholder.visible
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                Layout.leftMargin: contentLeftMargin
+                verticalAlignment: Qt.AlignCenter
+                asynchronous: true
+                cache: true
+                source: "image://unified-search-result-image/" + model.icon
+                sourceSize.width: model.icon ? Style.trayWindowHeaderHeight : 0
+                sourceSize.height: model.icon ? Style.trayWindowHeaderHeight : 0
+                Layout.preferredWidth: model.icon ? Style.trayWindowHeaderHeight : 0
+                Layout.preferredHeight: model.icon ? Style.trayWindowHeaderHeight : 0
             }
             Image {
                 id: unifiedSearchResultThumbnailPlaceholder
