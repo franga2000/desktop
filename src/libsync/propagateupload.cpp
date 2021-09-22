@@ -222,7 +222,7 @@ void PropagateUploadFileCommon::start()
         // Try to rename the file
         const auto originalFilePathAbsolute = propagator()->fullLocalPath(_item->_file);
         const auto newFilePathAbsolute = propagator()->fullLocalPath(_item->_renameTarget);
-        QFile originalFile(originalFilePathAbsolute);
+        QFile originalFile { originalFilePathAbsolute };
         const auto renameSuccess = originalFile.rename(newFilePathAbsolute);
         if (!renameSuccess) {
             done(SyncFileItem::NormalError, "File contains trailing spaces and couldn't be renamed");
