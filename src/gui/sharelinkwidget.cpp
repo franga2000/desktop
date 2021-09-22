@@ -399,8 +399,6 @@ void ShareLinkWidget::slotPasswordSet()
         _ui->lineEdit_password->setPlaceholderText(QString());
     }
 
-    setupUiOptions();
-
     emit createPasswordProcessed();
 }
 
