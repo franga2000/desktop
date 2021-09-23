@@ -9,7 +9,7 @@ MouseArea {
 
     property int defaultHeight: 0
 
-    readonly property int contentLeftMargin: 8
+    readonly property int contentLeftMargin: 4
     readonly property int contentRightMargin: contentLeftMargin
 
     readonly property int typeCategorySeparator: 1
@@ -69,16 +69,10 @@ MouseArea {
                 visible: !unifiedSearchResultThumbnailPlaceholder.visible
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: contentLeftMargin
-                Layout.preferredWidth: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight : 0
-                Layout.preferredHeight: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight : 0
+                Layout.preferredWidth: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight / 2 : 0
+                Layout.preferredHeight: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight / 2: 0
                 source: unifiedSearchResultThumbnail
                 maskSource: mask
-
-                Rectangle {
-                    visible: false
-                    color: 'red'
-                    anchors.fill: parent
-                }
             }
             Image {
                 id: unifiedSearchResultThumbnailPlaceholder

@@ -267,7 +267,7 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                 result._categoryId = category._id;
                 result._categoryName = category._name;
                 result._icon = entry.toMap()["icon"].toString();
-                result._isRounded = category._id.contains("mail") || category._id.contains("talk") || category._id.contains("comments");
+                result._isRounded = entry.toMap()["rounded"].toBool();
                 result._order = category._order;
                 result._title = entry.toMap()["title"].toString();
                 result._subline = entry.toMap()["subline"].toString();

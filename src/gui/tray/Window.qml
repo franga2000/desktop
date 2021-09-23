@@ -715,7 +715,7 @@ Window {
 
             delegate: UnifiedSearchResultItem {
                 width: unifiedSearchResultsListView.width
-                height: Style.trayWindowHeaderHeight
+                defaultHeight: Style.trayWindowHeaderHeight
                 onClicked: unifiedSearchResultsModel.resultClicked(model.index)
             }
         }
