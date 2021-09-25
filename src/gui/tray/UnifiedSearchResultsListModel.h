@@ -35,6 +35,7 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
     Q_OBJECT
 
     Q_PROPERTY(bool isSearchInProgress READ isSearchInProgress NOTIFY isSearchInProgressChanged)
+    Q_PROPERTY(QString errorString MEMBER _errorString)
 
     class UnifiedSearchProvider
     {
@@ -78,7 +79,7 @@ protected:
 private slots:
     void slotSearchTermEditingFinished();
 
-    void slotSearchForProviderFinished(const QJsonDocument &json);
+    void slotSearchForProviderFinished(const QJsonDocument &json, int statusCode);
 
 private:
     void startSearch();
@@ -95,6 +96,8 @@ private:
     AccountState *_accountState;
     QMap<QString, UnifiedSearchResultCategory> _resultsByCategory;
     QList<UnifiedSearchResult> _resultsCombined;
+
+    QString _errorString;
 
     QMap<QString, QMetaObject::Connection> _searchJobConnections;
 };
