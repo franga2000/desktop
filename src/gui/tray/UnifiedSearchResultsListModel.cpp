@@ -143,7 +143,7 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
     _searchTerm = term;
 
     if (!searchTerm().isEmpty()) {
-        _unifiedSearchTextEditingFinishedTimer.setInterval(400);
+        _unifiedSearchTextEditingFinishedTimer.setInterval(600);
         connect(&_unifiedSearchTextEditingFinishedTimer, &QTimer::timeout, this, &UnifiedSearchResultsListModel::slotSearchTermEditingFinished);
         _unifiedSearchTextEditingFinishedTimer.start();
     } else {
@@ -153,7 +153,12 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
             }
         }
 
+        const auto numSearchJobConections = _searchJobConnections.size();
         _searchJobConnections.clear();
+
+        if (numSearchJobConections > 0) {
+            emit isSearchInProgressChanged();
+        }
 
         beginResetModel();
         _resultsByCategory.clear();
@@ -165,6 +170,11 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
 QString UnifiedSearchResultsListModel::searchTerm() const
 {
     return _searchTerm;
+}
+
+bool UnifiedSearchResultsListModel::isSearchInProgress() const
+{
+    return _searchJobConnections.size() > 0;
 }
 
 void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
@@ -231,17 +241,24 @@ void UnifiedSearchResultsListModel::slotSearchTermEditingFinished()
 
 void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDocument &json)
 {
+    bool appendResults = false;
+
+    if (const auto job = qobject_cast<JsonApiJob *>(sender())) {
+        appendResults = job->property("appendResults").toBool();
+        const auto providerId = job->property("providerId").toString();
+        const auto numJobConnections = _searchJobConnections.size();
+        _searchJobConnections.remove(providerId);
+
+        if (numJobConnections != 0 && _searchJobConnections.size() == 0) {
+            emit isSearchInProgressChanged();
+        }
+    }
+
     if (searchTerm().isEmpty()) {
         return;
     }
 
-    bool appendResults = false;
-
     QList<UnifiedSearchResult> newEntries;
-
-    if (const auto job = qobject_cast<JsonApiJob *>(sender())) {
-        appendResults = job->property("appendResults").toBool();
-    }
 
     const auto data = json.object().value("ocs").toObject().value("data").toObject();
     if (!data.isEmpty()) {
@@ -333,8 +350,13 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
         params.addQueryItem("cursor", QString::number(cursor));
         job->setProperty("appendResults", true);
     }
+    job->setProperty("providerId", provider._id);
     job->addQueryParams(params);
-    _searchJobConnections.push_back(QObject::connect(job, &JsonApiJob::jsonReceived, this, &UnifiedSearchResultsListModel::slotSearchForProviderFinished));
+    const auto numSearchJobConnections = _searchJobConnections.size();
+    _searchJobConnections.insert(provider._id, QObject::connect(job, &JsonApiJob::jsonReceived, this, &UnifiedSearchResultsListModel::slotSearchForProviderFinished));
+    if (_searchJobConnections.size() > 0 && numSearchJobConnections == 0) {
+        emit isSearchInProgressChanged();
+    }
     job->start();
 }
 void UnifiedSearchResultsListModel::combineResults()

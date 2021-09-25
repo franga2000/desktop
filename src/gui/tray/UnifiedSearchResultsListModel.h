@@ -34,6 +34,8 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool isSearchInProgress READ isSearchInProgress NOTIFY isSearchInProgressChanged)
+
     class UnifiedSearchProvider
     {
     public:
@@ -63,7 +65,12 @@ public:
     void setSearchTerm(const QString &term);
     QString searchTerm() const;
 
+    bool isSearchInProgress() const;
+
     Q_INVOKABLE void resultClicked(int resultIndex);
+
+public: signals:
+    void isSearchInProgressChanged();
 
 protected:
     QHash<int, QByteArray> roleNames() const override;
@@ -89,7 +96,7 @@ private:
     QMap<QString, UnifiedSearchResultCategory> _resultsByCategory;
     QList<UnifiedSearchResult> _resultsCombined;
 
-    QList<QMetaObject::Connection> _searchJobConnections;
+    QMap<QString, QMetaObject::Connection> _searchJobConnections;
 };
 }
 

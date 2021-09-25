@@ -576,7 +576,7 @@ Window {
 
                     text: UserModel.searchTerm
 
-                    readOnly: !UserModel.currentUser.isConnected
+                    readOnly: !UserModel.currentUser.isConnected || unifiedSearchResultsModel.isSearchInProgress
 
                     readonly property color textFieldIconsColor: Style.menuBorder
 
@@ -638,7 +638,7 @@ Window {
                         antialiasing: true
                         mipmap: true
 
-                        visible: parent.text
+                        visible: !unifiedSearchResultsModel.isSearchInProgress && parent.text
 
                         source: "qrc:///client/theme/close.svg"
                         sourceSize: Qt.size(parent.height * parent.textFieldIconsScaleFactor, parent.height * parent.textFieldIconsScaleFactor)
@@ -661,6 +661,30 @@ Window {
                         }
                     }
 
+                    Image {
+                        id: trayWindowUnifiedSearchTextFieldIconInProgress
+
+                        anchors {
+                            right: parent.right
+                            rightMargin: parent.textFieldIconsOffset
+                            verticalCenter: parent.verticalCenter
+                        }
+
+                        smooth: true;
+                        antialiasing: true
+                        mipmap: true
+
+                        visible: unifiedSearchResultsModel.isSearchInProgress
+
+                        source: "qrc:///client/theme/change.svg"
+                        sourceSize: Qt.size(parent.height * parent.textFieldIconsScaleFactor, parent.height * parent.textFieldIconsScaleFactor)
+
+                        ColorOverlay {
+                            anchors.fill: parent
+                            source: parent
+                            color: parent.parent.textFieldIconsColor
+                        }
+                    }
                     onTextEdited: UserModel.onUnifiedSearchTextEdited(text)
                 }
             }
