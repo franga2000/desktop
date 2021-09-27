@@ -298,8 +298,13 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                     if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
                         if (const auto currentUser = UserModel::instance()->currentUser()) {
                             auto serverUrl = QUrl(currentUser->server(false));
-                            serverUrl.setPath(result._icon);
+                            // some icons may contain parameters after (?)
+                            const QStringList iconPathSplitted = result._icon.contains(QLatin1Char('?')) ? result._icon.split(QLatin1Char('?')) : QStringList  { result._icon };
+                            serverUrl.setPath(iconPathSplitted[0]);
                             result._icon = serverUrl.toString();
+                            if (iconPathSplitted.size() > 1) {
+                                result._icon += QLatin1Char('?') + iconPathSplitted[1];
+                            }
                         }
                     }
                 }
@@ -320,6 +325,14 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                     if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
                         if (const auto currentUser = UserModel::instance()->currentUser()) {
                             auto serverUrl = QUrl(currentUser->server(false));
+                            // some icons may contain parameters after (?)
+                            const QStringList thumbnailUrlSplitted = result._thumbnailUrl.contains(QLatin1Char('?')) ? result._thumbnailUrl.split(QLatin1Char('?')) : QStringList { result._thumbnailUrl };
+                            serverUrl.setPath(thumbnailUrlSplitted[0]);
+                            result._thumbnailUrl = serverUrl.toString();
+                            if (thumbnailUrlSplitted.size() > 1) {
+                                result._icon += QLatin1Char('?') + thumbnailUrlSplitted[1];
+                            }
+
                             serverUrl.setPath(result._thumbnailUrl);
                             result._thumbnailUrl = serverUrl.toString();
                         }
