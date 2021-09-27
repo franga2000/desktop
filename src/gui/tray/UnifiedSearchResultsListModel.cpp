@@ -185,22 +185,6 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
                 // Load more items
                 const auto providerFound = _providers.find(categoryInfo._name);
                 if (providerFound != _providers.end()) {
-                    // Let's remove the FetchMoreTrigger item if present
-                    const auto providerId = providerFound->_id;
-                    const auto foudFetchMoreTriggerForProviderReverse = std::find_if(std::rbegin(_resultsCombined), std::rend(_resultsCombined), [providerId](const UnifiedSearchResult &result) {
-                        return result._categoryId == providerId && result._type == UnifiedSearchResult::Type::FetchMoreTrigger;
-                    });
-
-                    if (foudFetchMoreTriggerForProviderReverse != std::rend(_resultsCombined)) {
-                        const auto foundFetchMoreTriggerForProvider = (foudFetchMoreTriggerForProviderReverse + 1).base();
-
-                        if (foundFetchMoreTriggerForProvider != std::end(_resultsCombined) && foundFetchMoreTriggerForProvider != std::begin(_resultsCombined)) {
-                            Q_ASSERT(foundFetchMoreTriggerForProvider->_type == UnifiedSearchResult::Type::FetchMoreTrigger && foundFetchMoreTriggerForProvider->_categoryId == providerId);
-                            beginRemoveRows(QModelIndex(), foundFetchMoreTriggerForProvider - std::begin(_resultsCombined), foundFetchMoreTriggerForProvider - std::begin(_resultsCombined));
-                            _resultsCombined.erase(foundFetchMoreTriggerForProvider);
-                            endRemoveRows();
-                        }
-                    }
 
                     startSearchForProvider(*providerFound, categoryInfo._cursor);
                 }
@@ -448,7 +432,7 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(const UnifiedSearchP
             const auto categoryInfo = _resultsByCategory.value(provider._id, UnifiedSearchResultCategory());
 
             if (!categoryInfo._id.isEmpty() && categoryInfo._id == provider._id) {
-                const auto numRowsToInsert = categoryInfo._isPaginated ? results.size() + 1 : results.size();
+                const auto numRowsToInsert = results.size();
                 const auto foundLastResultForProvider = (foundLastResultForProviderReverse + 1).base();
                 const auto first = foundLastResultForProvider + 1 - std::begin(_resultsCombined);
                 const auto last = first + numRowsToInsert - 1;
@@ -456,21 +440,28 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(const UnifiedSearchP
                 std::copy(std::begin(results), std::end(results), std::inserter(_resultsCombined, foundLastResultForProvider + 1));
                 if (categoryInfo._isPaginated) {
                     const auto foundLastResultForProviderReverse = std::find_if(std::rbegin(_resultsCombined), std::rend(_resultsCombined), [&provider](const UnifiedSearchResult &result) {
-                        return result._categoryId == provider._id && result._type == UnifiedSearchResult::Type::Default;
+                        return result._categoryId == provider._id && result._type == UnifiedSearchResult::Type::FetchMoreTrigger;
                     });
-
-                    if (foundLastResultForProviderReverse != std::rend(_resultsCombined)) {
-                        const auto foundLastResultForProvider = (foundLastResultForProviderReverse + 1).base();
-
-                        UnifiedSearchResult fetchMoreTrigger;
-                        fetchMoreTrigger._categoryId = provider._id;
-                        fetchMoreTrigger._categoryName = provider._name;
-                        fetchMoreTrigger._type = UnifiedSearchResult::Type::FetchMoreTrigger;
-
-                        _resultsCombined.insert(foundLastResultForProvider + 1, fetchMoreTrigger);
-                    }
                 }
                 endInsertRows();
+                if (!categoryInfo._isPaginated) {
+                    // Let's remove the FetchMoreTrigger item if present
+                    const auto providerId = provider._id;
+                    const auto foudFetchMoreTriggerForProviderReverse = std::find_if(std::rbegin(_resultsCombined), std::rend(_resultsCombined), [providerId](const UnifiedSearchResult &result) {
+                        return result._categoryId == providerId && result._type == UnifiedSearchResult::Type::FetchMoreTrigger;
+                    });
+
+                    if (foudFetchMoreTriggerForProviderReverse != std::rend(_resultsCombined)) {
+                        const auto foundFetchMoreTriggerForProvider = (foudFetchMoreTriggerForProviderReverse + 1).base();
+
+                        if (foundFetchMoreTriggerForProvider != std::end(_resultsCombined) && foundFetchMoreTriggerForProvider != std::begin(_resultsCombined)) {
+                            Q_ASSERT(foundFetchMoreTriggerForProvider->_type == UnifiedSearchResult::Type::FetchMoreTrigger && foundFetchMoreTriggerForProvider->_categoryId == providerId);
+                            beginRemoveRows(QModelIndex(), foundFetchMoreTriggerForProvider - std::begin(_resultsCombined), foundFetchMoreTriggerForProvider - std::begin(_resultsCombined));
+                            _resultsCombined.erase(foundFetchMoreTriggerForProvider);
+                            endRemoveRows();
+                        }
+                    }
+                }
             }
         }
     }

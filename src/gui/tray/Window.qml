@@ -685,6 +685,14 @@ Window {
                             color: parent.parent.textFieldIconsColor
                         }
                     }
+                    RotationAnimator {
+                        target: trayWindowUnifiedSearchTextFieldIconInProgress
+                        running: trayWindowUnifiedSearchTextFieldIconInProgress.visible
+                        from: 0
+                        to: 360
+                        loops: Animation.Infinite
+                        duration: 1250
+                    }
                     onTextEdited: UserModel.onUnifiedSearchTextEdited(text)
                 }
             }
