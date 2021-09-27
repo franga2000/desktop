@@ -43,6 +43,7 @@ MouseArea {
 
         ColumnLayout {
             id: unifiedSearchResultImageContainer
+            readonly property int iconWidth: Style.trayWindowHeaderHeight / 2
             visible: true
             Layout.preferredWidth: visible ? Layout.preferredHeight : 0
             Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight : 0
@@ -69,8 +70,8 @@ MouseArea {
                 visible: !unifiedSearchResultThumbnailPlaceholder.visible
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: contentLeftMargin
-                Layout.preferredWidth: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight / 2 : 0
-                Layout.preferredHeight: model.thumbnailUrl || model.icon ? Style.trayWindowHeaderHeight / 2: 0
+                Layout.preferredWidth: model.thumbnailUrl || model.icon ? unifiedSearchResultImageContainer.iconWidth : 0
+                Layout.preferredHeight: model.thumbnailUrl || model.icon ? unifiedSearchResultImageContainer.iconWidth: 0
                 source: unifiedSearchResultThumbnail
                 maskSource: mask
             }
@@ -82,10 +83,10 @@ MouseArea {
                 verticalAlignment: Qt.AlignCenter
                 cache: true
                 source: "qrc:///client/theme/change.svg"
-                sourceSize.height: Style.trayWindowHeaderHeight
-                sourceSize.width: Style.trayWindowHeaderHeight
-                Layout.preferredWidth: visible ? Layout.preferredHeight : 0
-                Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight : 0
+                sourceSize.height: unifiedSearchResultImageContainer.iconWidth
+                sourceSize.width: unifiedSearchResultImageContainer.iconWidth
+                Layout.preferredWidth: visible ? unifiedSearchResultImageContainer.iconWidth : 0
+                Layout.preferredHeight: visible ? unifiedSearchResultImageContainer.iconWidth : 0
             }
         }
 

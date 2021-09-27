@@ -24,7 +24,7 @@ class AsyncImageResponse : public QQuickImageResponse
 public:
     AsyncImageResponse(const QString &id, const QSize &requestedSize)
     {
-        _imagePaths = id.split(";", Qt::SkipEmptyParts);
+        _imagePaths = id.split(QLatin1Char(';'), Qt::SkipEmptyParts);
         _requestedImageSize = requestedSize;
 
         if (_imagePaths.isEmpty()) {
@@ -58,7 +58,7 @@ private:
 
         const QUrl iconUrl = QUrl(_imagePaths.at(_index));
 
-        if (_imagePaths.at(_index).startsWith(":/client")) {
+        if (_imagePaths.at(_index).startsWith(QStringLiteral(":/client"))) {
             // return a local file
             emitFinished(QIcon(_imagePaths.at(_index)).pixmap(_requestedImageSize).toImage());
             return;
@@ -67,7 +67,7 @@ private:
         if (auto currentAccount = UserModel::instance()->currentUser()->account()) {
             // fetch remote resource
             ++_index;
-            auto reply = currentAccount->sendRawRequest("GET", iconUrl);
+            auto reply = currentAccount->sendRawRequest(QByteArrayLiteral("GET"), iconUrl);
             connect(reply, &QNetworkReply::finished, this, [this, reply]() {
                 const QByteArray data = reply->readAll();
                 if (data.isEmpty() || data == QByteArrayLiteral("[]")) {

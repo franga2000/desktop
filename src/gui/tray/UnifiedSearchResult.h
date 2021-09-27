@@ -51,6 +51,7 @@ public:
     QString _thumbnailUrl;
     QString _thumbnail;
     QString _resourceUrl;
+    QString _images;
     quint8 _type = Type::Default;
 };
 
