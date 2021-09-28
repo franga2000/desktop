@@ -35,6 +35,7 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
     Q_OBJECT
 
     Q_PROPERTY(bool isSearchInProgress READ isSearchInProgress NOTIFY isSearchInProgressChanged)
+    Q_PROPERTY(bool isFetchMoreInProgress MEMBER _isFetchMoreInProgress NOTIFY isFetchMoreInProgressChanged)
     Q_PROPERTY(QString errorString MEMBER _errorString)
 
     class UnifiedSearchProvider
@@ -49,6 +50,7 @@ public:
     enum DataRole {
         CategoryNameRole = Qt::UserRole + 1,
         CategoryIdRole,
+        ImagePlaceholderRole,
         ImagesRole,
         IconRole,
         TitleRole,
@@ -68,10 +70,12 @@ public:
     QString searchTerm() const;
 
     bool isSearchInProgress() const;
+    bool isFetchMoreInProgress() const;
 
     Q_INVOKABLE void resultClicked(int resultIndex);
 
 public: signals:
+    void isFetchMoreInProgressChanged();
     void isSearchInProgressChanged();
 
 protected:
@@ -99,6 +103,8 @@ private:
     QList<UnifiedSearchResult> _resultsCombined;
 
     QString _errorString;
+
+    bool _isFetchMoreInProgress = false;
 
     QMap<QString, QMetaObject::Connection> _searchJobConnections;
 };

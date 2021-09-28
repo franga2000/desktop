@@ -46,6 +46,23 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     case CategoryIdRole: {
         return _resultsCombined.at(index.row())._categoryId;
     }
+    case ImagePlaceholderRole: {
+        const auto resultInfo = _resultsCombined.at(index.row());
+
+        if (resultInfo._categoryId.contains(QStringLiteral("messages"))) {
+            return QStringLiteral("qrc:///client/theme/black/wizard-talk.svg");
+        } else if (resultInfo._categoryId.contains(QStringLiteral("file"))) {
+            return QStringLiteral("qrc:///client/theme/black/edit.svg");
+        } else if (resultInfo._categoryId.contains(QStringLiteral("calendar"))) {
+            return QStringLiteral("qrc:///client/theme/black/calendar.svg");
+        } else if (resultInfo._categoryId.contains(QStringLiteral("mail"))) {
+            return QStringLiteral("qrc:///client/theme/black/email.svg");
+        } else if (resultInfo._categoryId.contains(QStringLiteral("comment"))) {
+            return QStringLiteral("qrc:///client/theme/account.svg");
+        }
+
+        return QString();
+    }
     case ImagesRole: {
         return _resultsCombined.at(index.row())._images;
     }
@@ -104,6 +121,7 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
     roles[CategoryNameRole] = "categoryName";
     roles[CategoryIdRole] = "categoryId";
     roles[IconRole] = "icon";
+    roles[ImagePlaceholderRole] = "imagePlaceholder";
     roles[TitleRole] = "resultTitle";
     roles[SublineRole] = "subline";
     roles[ResourceUrlRole] = "resourceUrl";
@@ -128,7 +146,7 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
     _searchTerm = term;
 
     if (!searchTerm().isEmpty()) {
-        _unifiedSearchTextEditingFinishedTimer.setInterval(600);
+        _unifiedSearchTextEditingFinishedTimer.setInterval(800);
         connect(&_unifiedSearchTextEditingFinishedTimer, &QTimer::timeout, this, &UnifiedSearchResultsListModel::slotSearchTermEditingFinished);
         _unifiedSearchTextEditingFinishedTimer.start();
     } else {
@@ -185,7 +203,8 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
                 // Load more items
                 const auto providerFound = _providers.find(categoryInfo._name);
                 if (providerFound != _providers.end()) {
-
+                    _isFetchMoreInProgress = true;
+                    emit isFetchMoreInProgressChanged();
                     startSearchForProvider(*providerFound, categoryInfo._cursor);
                 }
             }
@@ -213,10 +232,12 @@ void UnifiedSearchResultsListModel::slotSearchTermEditingFinished()
 
             for (const auto &provider : providerList) {
                 const auto providerMap = provider.toMap();
+                const auto id = providerMap[QStringLiteral("id")].toString();
+                const auto name = providerMap[QStringLiteral("name")].toString();
                 UnifiedSearchProvider newProvider;
-                newProvider._name = providerMap[QStringLiteral("name")].toString();
-                if (!newProvider._name.isEmpty()) {
-                    newProvider._id = providerMap[QStringLiteral("id")].toString();
+                if (!name.isEmpty() && id != QStringLiteral("talk-message-current")) {
+                    newProvider._name = name;
+                    newProvider._id = id;
                     newProvider._order = providerMap[QStringLiteral("order")].toInt();
                     _providers.insert(newProvider._name, newProvider);
                 }
@@ -244,6 +265,11 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
 
         if (numJobConnections != 0 && _searchJobConnections.size() == 0) {
             emit isSearchInProgressChanged();
+        }
+
+        if (_isFetchMoreInProgress) {
+            _isFetchMoreInProgress = false;
+            emit isFetchMoreInProgressChanged();
         }
 
         if (statusCode != 200) {
@@ -315,10 +341,6 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                 result._resourceUrl = entry.toMap().value(QStringLiteral("resourceUrl")).toString();
                 result._thumbnailUrl = entry.toMap().value(QStringLiteral("thumbnailUrl")).toString();
 
-                const QStringList listImages = { result._thumbnailUrl, result._icon };
-
-                result._images = listImages.join(QLatin1Char(';'));
-
                 if (result._thumbnailUrl.contains(QLatin1Char('/')) || result._thumbnailUrl.contains(QLatin1Char('\\'))) {
                     const QUrl urlForIcon(result._thumbnailUrl);
 
@@ -332,12 +354,12 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                             if (thumbnailUrlSplitted.size() > 1) {
                                 result._icon += QLatin1Char('?') + thumbnailUrlSplitted[1];
                             }
-
-                            serverUrl.setPath(result._thumbnailUrl);
-                            result._thumbnailUrl = serverUrl.toString();
                         }
                     }
                 }
+
+                const QStringList listImages = { result._thumbnailUrl, result._icon };
+                result._images = listImages.join(QLatin1Char(';'));
 
                 newEntries.push_back(result);
             }

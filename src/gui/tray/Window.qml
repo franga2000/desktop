@@ -576,7 +576,7 @@ Window {
 
                     text: UserModel.searchTerm
 
-                    readOnly: !UserModel.currentUser.isConnected || unifiedSearchResultsModel.isSearchInProgress
+                    readOnly: !UserModel.currentUser.isConnected || unifiedSearchResultsModel.isFetchMoreInProgress
 
                     readonly property color textFieldIconsColor: Style.menuBorder
 
@@ -748,6 +748,8 @@ Window {
             delegate: UnifiedSearchResultItem {
                 width: unifiedSearchResultsListView.width
                 defaultHeight: Style.trayWindowHeaderHeight
+                isFetchMoreInProgress: unifiedSearchResultsModel.isFetchMoreInProgress
+                isSearchInProgress: unifiedSearchResultsModel.isSearchInProgress
                 onClicked: unifiedSearchResultsModel.resultClicked(model.index)
             }
         }

@@ -18,8 +18,11 @@ MouseArea {
     readonly property bool isFetchMoreTrigger: model.type === typeFetchMoreTrigger
     readonly property bool isCategorySeparator: model.type === typeCategorySeparator
 
-    enabled: !isCategorySeparator
-    hoverEnabled: !isCategorySeparator
+    property bool isFetchMoreInProgress: false
+    property bool isSearchInProgress: false
+
+    enabled: !isCategorySeparator && !isSearchInProgress
+    hoverEnabled: !isCategorySeparator && !isSearchInProgress
 
     height: !isCategorySeparator ? defaultHeight : defaultHeight/2
     
@@ -82,7 +85,7 @@ MouseArea {
                 Layout.leftMargin: contentLeftMargin
                 verticalAlignment: Qt.AlignCenter
                 cache: true
-                source: "qrc:///client/theme/change.svg"
+                source: model.imagePlaceholder ? imagePlaceholder : "qrc:///client/theme/change.svg"
                 sourceSize.height: unifiedSearchResultImageContainer.iconWidth
                 sourceSize.width: unifiedSearchResultImageContainer.iconWidth
                 Layout.preferredWidth: visible ? unifiedSearchResultImageContainer.iconWidth : 0
@@ -139,13 +142,43 @@ MouseArea {
             Text {
                 id: unifiedSearchResultItemFetchMoreText
                 text: qsTr("Load more results")
-                visible: parent.visible
+                visible: parent.visible && !isFetchMoreInProgress
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                width: parent.width
-                height: parent.height
+                width: parent.visible && !isFetchMoreInProgress ? parent.width : 0
+                height: parent.visible && !isFetchMoreInProgress ? parent.height: 0
                 font.pixelSize: Style.topLinePixelSize
                 color: "grey"
+            }
+            Image {
+                id: unifiedSearchResultItemFetchMoreIconInProgress
+                visible: parent.visible && isFetchMoreInProgress
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    verticalCenter: parent.verticalCenter
+                }
+                cache: true
+                source: "qrc:///client/theme/change.svg"
+                sourceSize.height: Style.trayWindowHeaderHeight / 2
+                sourceSize.width: Style.trayWindowHeaderHeight / 2
+                Layout.preferredWidth: visible ? Style.trayWindowHeaderHeight / 2 : 0
+                Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight / 2 : 0
+
+                ColorOverlay {
+                    anchors.fill: parent
+                    source: parent
+                    color: Style.menuBorder
+                }
+            }
+
+            RotationAnimator {
+                target: unifiedSearchResultItemFetchMoreIconInProgress
+                running: unifiedSearchResultItemFetchMoreIconInProgress.visible
+                from: 0
+                to: 360
+                loops: Animation.Infinite
+                duration: 1250
             }
         }
     }

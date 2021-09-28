@@ -31,7 +31,7 @@ class UnifiedSearchResult
     Q_PROPERTY(QString categoryName MEMBER _categoryName)
     Q_PROPERTY(QString subline MEMBER _subline)
     Q_PROPERTY(QString thumbnailUrl MEMBER _thumbnailUrl)
-    Q_PROPERTY(QString thumbnail MEMBER _thumbnail)
+    Q_PROPERTY(QString imagePlaceholder MEMBER _imagePlaceholder)
     Q_PROPERTY(quint8 type MEMBER _type)
 
 public:
@@ -49,7 +49,7 @@ public:
     QString _icon;
     qint32 _order = INT32_MAX;
     QString _thumbnailUrl;
-    QString _thumbnail;
+    QString _imagePlaceholder;
     QString _resourceUrl;
     QString _images;
     quint8 _type = Type::Default;
