@@ -89,7 +89,7 @@ void SyncStatusModel::onFolderSyncStateChanged(const Folder *folder)
     }
 }
 
-double calculateOverallPercent(qint64 totalFileCount, qint64 completedFile, qint64 totalSize, qint64 completedSize)
+constexpr double calculateOverallPercent(qint64 totalFileCount, qint64 completedFile, qint64 totalSize, qint64 completedSize)
 {
     int overallPercent = 0;
     if (totalFileCount > 0) {
