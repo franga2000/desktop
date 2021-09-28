@@ -37,57 +37,46 @@ namespace OCC {
 
 Q_LOGGING_CATEGORY(lcDisco, "sync.discovery", QtInfoMsg)
 
-bool ProcessDirectoryJob::checkForInvalidFileName(const SyncFileItemPtr &item)
+
+bool ProcessDirectoryJob::checkForInvalidFileName(const PathTuple &path,
+    const std::map<QString, Entries> &entries, Entries &entry)
 {
-    const QString folderPath = _discoveryData->_localDir;
+    const auto originalFileName = entry.localEntry.name;
+    const auto newFileName = originalFileName.trimmed();
 
-    const auto originalFilePathSyncFolder = item->_file;
-    auto slashPosition = originalFilePathSyncFolder.lastIndexOf('/');
-    const auto originalFileParentPathSyncFolder = slashPosition >= 0 ? originalFilePathSyncFolder.left(slashPosition) : QString();
-    const auto newFileName = originalFilePathSyncFolder.mid(slashPosition + 1).trimmed();
-    const QString originalFilePathAbsolute = folderPath + item->_file;
-    slashPosition = originalFilePathAbsolute.lastIndexOf('/');
-    const auto orignalFileParentPathAbsolute = originalFilePathAbsolute.left(slashPosition);
-    const QString newFilePathAbsolute = orignalFileParentPathAbsolute + QStringLiteral("/") + newFileName;
-
-    if (newFilePathAbsolute != originalFilePathAbsolute) {
-        QFileInfo newFileInfo(newFilePathAbsolute);
-
-        // Check if the file exists locally
-        if (newFileInfo.exists()) {
-            item->_instruction = CSYNC_INSTRUCTION_ERROR;
-            item->_status = SyncFileItem::NormalError;
-            item->_errorString = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists.");
-            return false;
-        }
-
-        // Check if remote file exists
-        QEventLoop loop;
-        auto remoteFileWithNewNameExists = true;
-        const auto propfindJob = new PropfindJob(_discoveryData->_account, QDir::cleanPath(_discoveryData->_remoteFolder + _currentFolder._local + newFileName));
-        connect(propfindJob, &PropfindJob::result, &loop, [&remoteFileWithNewNameExists, &loop](const QVariantMap &) {
-            remoteFileWithNewNameExists = true;
-            loop.quit();
-        });
-        connect(propfindJob, &PropfindJob::finishedWithError, &loop, [&remoteFileWithNewNameExists, &loop](QNetworkReply *) {
-            remoteFileWithNewNameExists = false;
-            loop.quit();
-        });
-        propfindJob->start();
-        loop.exec();
-        if (remoteFileWithNewNameExists) {
-            item->_instruction = CSYNC_INSTRUCTION_ERROR;
-            item->_status = SyncFileItem::NormalError;
-            item->_errorString = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists on the server.");
-            return false;
-        }
-
-        // Store the information for the upload job
-        const QString newFilePathSyncFolder = originalFileParentPathSyncFolder.isEmpty()
-            ? newFileName
-            : originalFileParentPathSyncFolder + QStringLiteral("/") + newFileName;
-        item->_renameTarget = newFilePathSyncFolder;
+    if (originalFileName == newFileName) {
+        return true;
     }
+
+    const auto entriesIter = entries.find(newFileName);
+    if (entriesIter != entries.end()) {
+        QString errorMessage;
+        const auto newFileNameEntry = entriesIter->second;
+        if (newFileNameEntry.serverEntry.isValid()) {
+            errorMessage = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists on the server.");
+        }
+        if (newFileNameEntry.localEntry.isValid()) {
+            errorMessage = tr("File contains trailing spaces and coudn't be renamed, because a file with the same name already exists locally.");
+        }
+
+        if (!errorMessage.isEmpty()) {
+            auto item = SyncFileItemPtr::create();
+            if (entry.localEntry.isDirectory) {
+                item->_type = CSyncEnums::ItemTypeDirectory;
+            } else {
+                item->_type = CSyncEnums::ItemTypeFile;
+            }
+            item->_file = path._target;
+            item->_originalFile = path._target;
+            item->_instruction = CSYNC_INSTRUCTION_ERROR;
+            item->_status = SyncFileItem::NormalError;
+            item->_errorString = errorMessage;
+            emit _discoveryData->itemDiscovered(item);
+            return false;
+        }
+    }
+
+    entry.localEntry.renameName = newFileName;
 
     return true;
 }
@@ -131,12 +120,6 @@ void ProcessDirectoryJob::process()
     // However, if foo and foo.owncloud exists locally, there'll be "foo"
     // with local, db, server entries and "foo.owncloud" with only a local
     // entry.
-    struct Entries {
-        QString nameOverride;
-        SyncJournalFileRecord dbEntry;
-        RemoteInfo serverEntry;
-        LocalInfo localEntry;
-    };
     std::map<QString, Entries> entries;
     for (auto &e : _serverNormalQueryEntries) {
         entries[e.name].serverEntry = std::move(e);
@@ -194,8 +177,8 @@ void ProcessDirectoryJob::process()
     //
     // Iterate over entries and process them
     //
-    for (const auto &f : entries) {
-        const auto &e = f.second;
+    for (auto &f : entries) {
+        auto &e = f.second;
 
         PathTuple path;
         path = _currentFolder.addName(e.nameOverride.isEmpty() ? f.first : e.nameOverride);
@@ -248,6 +231,9 @@ void ProcessDirectoryJob::process()
 
         if (_queryServer == InBlackList || _discoveryData->isInSelectiveSyncBlackList(path._original)) {
             processBlacklisted(path, e.localEntry, e.dbEntry);
+            continue;
+        }
+        if (!checkForInvalidFileName(path, entries, e)) {
             continue;
         }
         processFile(std::move(path), e.localEntry, e.serverEntry, e.dbEntry);
@@ -403,6 +389,10 @@ void ProcessDirectoryJob::processFile(PathTuple path,
     item->_originalFile = path._original;
     item->_previousSize = dbEntry._fileSize;
     item->_previousModtime = dbEntry._modtime;
+
+    if (!localEntry.renameName.isEmpty()) {
+        item->_renameTarget = localEntry.renameName;
+    }
 
     if (dbEntry._modtime == localEntry.modtime && dbEntry._type == ItemTypeVirtualFile && localEntry.type == ItemTypeFile) {
         item->_type = ItemTypeFile;
@@ -999,11 +989,6 @@ void ProcessDirectoryJob::processFileAnalyzeLocalInfo(
     item->_modtime = localEntry.modtime;
     item->_type = localEntry.isDirectory ? ItemTypeDirectory : localEntry.isVirtualFile ? ItemTypeVirtualFile : ItemTypeFile;
     _childModified = true;
-
-    if (!checkForInvalidFileName(item)) {
-        emit _discoveryData->itemDiscovered(item);
-        return;
-    }
 
     auto postProcessLocalNew = [item, localEntry, path, this]() {
         // TODO: We may want to execute the same logic for non-VFS mode, as, moving/renaming the same folder by 2 or more clients at the same time is not possible in Web UI.
