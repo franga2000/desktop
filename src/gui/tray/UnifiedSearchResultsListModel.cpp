@@ -87,6 +87,9 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     case TypeRole: {
         return _resultsCombined.at(index.row())._type;
     }
+    case TypeAsStringRole: {
+        return UnifiedSearchResult::typeAsString(_resultsCombined.at(index.row())._type);
+    }
     }
 
     return QVariant();
@@ -109,6 +112,7 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
     roles[ResourceUrlRole] = "resourceUrl";
     roles[ThumbnailUrlRole] = "thumbnailUrl";
     roles[TypeRole] = "type";
+    roles[TypeAsStringRole] = "typeAsString";
     roles[RoundedRole] = "isRounded";
     return roles;
 }

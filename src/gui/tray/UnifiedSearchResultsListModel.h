@@ -58,7 +58,8 @@ public:
         ResourceUrlRole,
         RoundedRole,
         ThumbnailUrlRole,
-        TypeRole
+        TypeRole,
+        TypeAsStringRole,
     };
 
     explicit UnifiedSearchResultsListModel(AccountState *accountState, QObject *parent = nullptr);

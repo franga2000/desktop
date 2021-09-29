@@ -12,11 +12,8 @@ MouseArea {
     readonly property int contentLeftMargin: 4
     readonly property int contentRightMargin: contentLeftMargin
 
-    readonly property int typeCategorySeparator: 1
-    readonly property int typeFetchMoreTrigger: 2
-
-    readonly property bool isFetchMoreTrigger: model.type === typeFetchMoreTrigger
-    readonly property bool isCategorySeparator: model.type === typeCategorySeparator
+    readonly property bool isFetchMoreTrigger: model.typeAsString === "FetchMoreTrigger"
+    readonly property bool isCategorySeparator: model.typeAsString === "CategorySeparator"
 
     property bool isFetchMoreInProgress: false
     property bool isSearchInProgress: false
@@ -25,7 +22,7 @@ MouseArea {
     hoverEnabled: !isCategorySeparator && !isSearchInProgress
 
     height: !isCategorySeparator ? defaultHeight : defaultHeight/2
-    
+
     Rectangle {
         id: unifiedSearchResultHoverBackground
         anchors.fill: parent
