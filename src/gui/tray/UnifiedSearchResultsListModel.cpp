@@ -67,25 +67,7 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
         return _resultsCombined.at(index.row())._images;
     }
     case IconRole: {
-        const auto resultInfo = _resultsCombined.at(index.row());
-
-        if (!resultInfo._icon.isEmpty()) {
-            const QUrl urlForIcon(resultInfo._icon);
-
-            if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
-                if (resultInfo._icon.contains(QStringLiteral("folder"))) {
-                    return QStringLiteral(":/client/theme/black/folder.svg");
-                } else if (resultInfo._icon.contains(QStringLiteral("deck"))) {
-                    return QStringLiteral(":/client/theme/black/deck.svg");
-                } else if (resultInfo._icon.contains(QStringLiteral("calendar"))) {
-                    return QStringLiteral(":/client/theme/black/calendar.svg");
-                } else if (resultInfo._icon.contains(QStringLiteral("mail"))) {
-                    return QStringLiteral(":/client/theme/black/email.svg");
-                }
-            }
-        }
-
-        return resultInfo._icon;
+        return _resultsCombined.at(index.row())._icon;
     }
     case TitleRole: {
         return _resultsCombined.at(index.row())._title;
@@ -120,7 +102,7 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[CategoryNameRole] = "categoryName";
     roles[CategoryIdRole] = "categoryId";
-    roles[IconRole] = "icon";
+    roles[ImagesRole] = "images";
     roles[ImagePlaceholderRole] = "imagePlaceholder";
     roles[TitleRole] = "resultTitle";
     roles[SublineRole] = "subline";
@@ -334,6 +316,21 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                         }
                     }
                 }
+                else {
+                    const QUrl urlForIcon(result._icon);
+
+            if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
+                if (result._icon.contains(QStringLiteral("folder"))) {
+                    result._icon = QStringLiteral(":/client/theme/black/folder.svg");
+                } else if (result._icon.contains(QStringLiteral("deck"))) {
+                    result._icon = QStringLiteral(":/client/theme/black/deck.svg");
+                } else if (result._icon.contains(QStringLiteral("calendar"))) {
+                    result._icon = QStringLiteral(":/client/theme/black/calendar.svg");
+                } else if (result._icon.contains(QStringLiteral("mail"))) {
+                    result._icon = QStringLiteral(":/client/theme/black/email.svg");
+                }
+            }
+                }
 
                 result._isRounded = entry.toMap().value(QStringLiteral("rounded")).toBool();
                 result._title = entry.toMap().value(QStringLiteral("title")).toString();
@@ -352,7 +349,7 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                             serverUrl.setPath(thumbnailUrlSplitted[0]);
                             result._thumbnailUrl = serverUrl.toString();
                             if (thumbnailUrlSplitted.size() > 1) {
-                                result._icon += QLatin1Char('?') + thumbnailUrlSplitted[1];
+                                result._thumbnailUrl += QLatin1Char('?') + thumbnailUrlSplitted[1];
                             }
                         }
                     }

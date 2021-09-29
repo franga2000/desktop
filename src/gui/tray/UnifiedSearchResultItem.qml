@@ -54,7 +54,7 @@ MouseArea {
                 id: unifiedSearchResultThumbnail
                 visible: false
                 asynchronous: true
-                source: "image://unified-search-result-image/" + model.thumbnailUrl + ";" + model.icon
+                source: "image://unified-search-result-image/" + model.images
                 cache: true
                 sourceSize.width: imageData.width
                 sourceSize.height: imageData.height
@@ -73,14 +73,14 @@ MouseArea {
                 visible: !unifiedSearchResultThumbnailPlaceholder.visible
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: contentLeftMargin
-                Layout.preferredWidth: model.thumbnailUrl || model.icon ? unifiedSearchResultImageContainer.iconWidth : 0
-                Layout.preferredHeight: model.thumbnailUrl || model.icon ? unifiedSearchResultImageContainer.iconWidth: 0
+                Layout.preferredWidth: model.images ? unifiedSearchResultImageContainer.iconWidth : 0
+                Layout.preferredHeight: model.images ? unifiedSearchResultImageContainer.iconWidth: 0
                 source: unifiedSearchResultThumbnail
                 maskSource: mask
             }
             Image {
                 id: unifiedSearchResultThumbnailPlaceholder
-                visible: model.thumbnailUrl && unifiedSearchResultThumbnail.status != Image.Ready
+                visible: model.images && unifiedSearchResultThumbnail.status != Image.Ready
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: contentLeftMargin
                 verticalAlignment: Qt.AlignCenter
