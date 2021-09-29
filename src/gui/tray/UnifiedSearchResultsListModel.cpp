@@ -189,8 +189,8 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
                 // Load more items
                 const auto providerFound = _providers.find(categoryInfo._name);
                 if (providerFound != _providers.end()) {
-                    _isFetchMoreInProgress = true;
-                    emit isFetchMoreInProgressChanged();
+                    _currentFetchMoreInProgressCategoryId = categoryInfo._id;
+                    emit currentFetchMoreInProgressCategoryIdChanged();
                     startSearchForProvider(*providerFound, categoryInfo._cursor);
                 }
             }
@@ -253,9 +253,9 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
             emit isSearchInProgressChanged();
         }
 
-        if (_isFetchMoreInProgress) {
-            _isFetchMoreInProgress = false;
-            emit isFetchMoreInProgressChanged();
+        if (!_currentFetchMoreInProgressCategoryId.isEmpty()) {
+            _currentFetchMoreInProgressCategoryId.clear();
+            emit currentFetchMoreInProgressCategoryIdChanged();
         }
 
         if (statusCode != 200) {

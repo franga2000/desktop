@@ -15,7 +15,9 @@ MouseArea {
     readonly property bool isFetchMoreTrigger: model.typeAsString === "FetchMoreTrigger"
     readonly property bool isCategorySeparator: model.typeAsString === "CategorySeparator"
 
-    property bool isFetchMoreInProgress: false
+    property string currentFetchMoreInProgressCategoryId: ""
+
+    property bool isFetchMoreInProgress: currentFetchMoreInProgressCategoryId === model.categoryId
     property bool isSearchInProgress: false
 
     enabled: !isCategorySeparator && !isSearchInProgress

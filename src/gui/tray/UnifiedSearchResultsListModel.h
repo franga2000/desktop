@@ -35,7 +35,7 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
     Q_OBJECT
 
     Q_PROPERTY(bool isSearchInProgress READ isSearchInProgress NOTIFY isSearchInProgressChanged)
-    Q_PROPERTY(bool isFetchMoreInProgress MEMBER _isFetchMoreInProgress NOTIFY isFetchMoreInProgressChanged)
+    Q_PROPERTY(QString currentFetchMoreInProgressCategoryId MEMBER _currentFetchMoreInProgressCategoryId NOTIFY currentFetchMoreInProgressCategoryIdChanged)
     Q_PROPERTY(QString errorString MEMBER _errorString)
 
     class UnifiedSearchProvider
@@ -71,12 +71,11 @@ public:
     QString searchTerm() const;
 
     bool isSearchInProgress() const;
-    bool isFetchMoreInProgress() const;
 
     Q_INVOKABLE void resultClicked(int resultIndex);
 
 public: signals:
-    void isFetchMoreInProgressChanged();
+    void currentFetchMoreInProgressCategoryIdChanged();
     void isSearchInProgressChanged();
 
 protected:
@@ -105,7 +104,7 @@ private:
 
     QString _errorString;
 
-    bool _isFetchMoreInProgress = false;
+    QString _currentFetchMoreInProgressCategoryId;
 
     QMap<QString, QMetaObject::Connection> _searchJobConnections;
 };
