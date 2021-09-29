@@ -1,5 +1,6 @@
 import QtQml 2.12
 import QtQuick 2.9
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.2
 import Style 1.0
 import QtGraphicalEffects 1.0
@@ -23,7 +24,13 @@ MouseArea {
     enabled: !isCategorySeparator && !isSearchInProgress
     hoverEnabled: !isCategorySeparator && !isSearchInProgress
 
-    height: !isCategorySeparator ? defaultHeight : defaultHeight/2
+    height: !isCategorySeparator ? defaultHeight : defaultHeight / 2
+
+    ToolTip {
+        parent: unifiedSearchResultMouseArea
+        visible: !unifiedSearchResultMouseArea.isCategorySeparator && unifiedSearchResultMouseArea.containsMouse
+        text: isFetchMoreTrigger ? qsTr("Load more results") : model.resultTitle + "\n\n" + model.subline
+    }
 
     Rectangle {
         id: unifiedSearchResultHoverBackground
@@ -45,7 +52,7 @@ MouseArea {
 
         ColumnLayout {
             id: unifiedSearchResultImageContainer
-            readonly property int iconWidth: Style.trayWindowHeaderHeight / 2
+            readonly property int iconWidth: 24
             visible: true
             Layout.preferredWidth: visible ? Layout.preferredHeight : 0
             Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight : 0
