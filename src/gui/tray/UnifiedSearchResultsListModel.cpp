@@ -409,7 +409,7 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
             if (appendResults) {
                 appendResultsToProvider(*providerForResults, newEntries);
             } else {
-                combineResults();
+                combineResults(newEntries, category);
             }
         } else if (entries.isEmpty() && providerForResults != _providers.end()) {
             const auto providerId = (*providerForResults)._id;
@@ -425,7 +425,7 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                 if (appendResults) {
                     appendResultsToProvider(*providerForResults, {});
                 } else {
-                    combineResults();
+                    combineResults(newEntries, *resultsForProvider);
                 }
             }
         }
@@ -503,6 +503,68 @@ void UnifiedSearchResultsListModel::combineResults()
     beginInsertRows(QModelIndex(), 0, resultsCombined.size() - 1);
     _resultsCombined = resultsCombined;
     endInsertRows();
+}
+
+void UnifiedSearchResultsListModel::combineResults(const QList<UnifiedSearchResult> &newEntries, const UnifiedSearchResultCategory &category)
+{;
+    auto newEntriesCopy = newEntries;
+
+    const auto newEntriesOrder = newEntriesCopy.first()._order;
+    const auto newEntriesName = newEntriesCopy.first()._categoryName;
+
+    UnifiedSearchResult categorySeparator;
+    categorySeparator._categoryId = newEntries.first()._categoryId;
+    categorySeparator._categoryName = newEntriesName;
+    categorySeparator._order = newEntriesOrder;
+    categorySeparator._type = UnifiedSearchResult::Type::CategorySeparator;
+
+    newEntriesCopy.push_front(categorySeparator);
+
+
+    if (category._cursor > 0 && category._isPaginated) {
+        UnifiedSearchResult fetchMoreTrigger;
+        fetchMoreTrigger._categoryId = category._id;
+        fetchMoreTrigger._categoryName = category._name;
+        fetchMoreTrigger._order = newEntriesOrder;
+        fetchMoreTrigger._type = UnifiedSearchResult::Type::FetchMoreTrigger;
+        newEntriesCopy.push_back(fetchMoreTrigger);
+    }
+
+
+    if (_resultsCombined.isEmpty()) {
+        beginInsertRows(QModelIndex(), 0, newEntriesCopy.size() - 1);
+        _resultsCombined = newEntriesCopy;
+        endInsertRows();
+        return;
+    }
+
+    auto itToInsertTo = std::find_if(std::begin(_resultsCombined), std::end(_resultsCombined), [newEntriesOrder, newEntriesName](const UnifiedSearchResult &current) {
+        if (current._order > newEntriesOrder) {
+            return true;
+        } else {
+            if (current._order == newEntriesOrder) {
+                return current._categoryName > newEntriesName;
+            }
+
+            return false;
+        }
+    });
+
+    if (itToInsertTo != std::end(_resultsCombined)) {
+        const auto first = itToInsertTo - std::begin(_resultsCombined);
+        const auto last = first + newEntriesCopy.size() - 1;
+
+        beginInsertRows(QModelIndex(), first, last);
+        std::copy(std::begin(newEntriesCopy), std::end(newEntriesCopy), std::inserter(_resultsCombined, itToInsertTo));
+        endInsertRows();
+    } else {
+        const auto first = _resultsCombined.size();
+        const auto last = first + newEntriesCopy.size() - 1;
+
+        beginInsertRows(QModelIndex(), first, last);
+        std::copy(std::begin(newEntriesCopy), std::end(newEntriesCopy), std::back_inserter(_resultsCombined));
+        endInsertRows();
+    }
 }
 
 void UnifiedSearchResultsListModel::appendResultsToProvider(

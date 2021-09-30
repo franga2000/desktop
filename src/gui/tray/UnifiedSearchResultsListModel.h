@@ -92,6 +92,8 @@ private:
 
     void combineResults();
 
+    void combineResults(const QList<UnifiedSearchResult> &newEntries, const UnifiedSearchResultCategory &category);
+
     void appendResultsToProvider(const UnifiedSearchProvider &provider, QList<UnifiedSearchResult> results);
 
 private:
