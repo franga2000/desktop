@@ -10,8 +10,10 @@ MouseArea {
 
     property int defaultHeight: 0
 
-    readonly property int contentLeftMargin: 4
-    readonly property int contentRightMargin: contentLeftMargin
+    readonly property int iconLeftMargin: 12
+    readonly property int textLeftMargin: 4
+    readonly property int textRightMargin: 16
+    readonly property int categorySeparatorLeftMargin: 16
 
     readonly property bool isFetchMoreTrigger: model.typeAsString === "FetchMoreTrigger"
     readonly property bool isCategorySeparator: model.typeAsString === "CategorySeparator"
@@ -54,7 +56,7 @@ MouseArea {
             id: unifiedSearchResultImageContainer
             readonly property int iconWidth: 24
             visible: true
-            Layout.preferredWidth: visible ? Layout.preferredHeight : 0
+            Layout.preferredWidth: visible ? iconWidth + 10 : 0
             Layout.preferredHeight: visible ? Style.trayWindowHeaderHeight : 0
             Image {
                 id: unifiedSearchResultThumbnail
@@ -78,7 +80,7 @@ MouseArea {
                 id: imageData
                 visible: !unifiedSearchResultThumbnailPlaceholder.visible
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                Layout.leftMargin: contentLeftMargin
+                Layout.leftMargin: iconLeftMargin
                 Layout.preferredWidth: model.images ? unifiedSearchResultImageContainer.iconWidth : 0
                 Layout.preferredHeight: model.images ? unifiedSearchResultImageContainer.iconWidth: 0
                 source: unifiedSearchResultThumbnail
@@ -88,7 +90,7 @@ MouseArea {
                 id: unifiedSearchResultThumbnailPlaceholder
                 visible: model.images && unifiedSearchResultThumbnail.status != Image.Ready
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                Layout.leftMargin: contentLeftMargin
+                Layout.leftMargin: iconLeftMargin
                 verticalAlignment: Qt.AlignCenter
                 cache: true
                 source: model.imagePlaceholder ? imagePlaceholder : "qrc:///client/theme/change.svg"
@@ -107,8 +109,8 @@ MouseArea {
                 id: unifiedSearchResultTitleText
                 text: model.resultTitle.replace(/[\r\n]+/g, " ")
                 visible: parent.visible
-                Layout.leftMargin: contentLeftMargin
-                Layout.rightMargin: contentRightMargin
+                Layout.leftMargin: textLeftMargin
+                Layout.rightMargin: textRightMargin
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 font.pixelSize: Style.topLinePixelSize
@@ -119,8 +121,8 @@ MouseArea {
                 text: model.subline.replace(/[\r\n]+/g, " ")
                 elide: Text.ElideRight
                 visible: parent.visible
-                Layout.leftMargin: contentLeftMargin
-                Layout.rightMargin: contentRightMargin
+                Layout.leftMargin: textLeftMargin
+                Layout.rightMargin: textRightMargin
                 Layout.fillWidth: true
                 color: "grey"
             }
@@ -203,7 +205,7 @@ MouseArea {
             id: unifiedSearchResultItemCategorySeparatorColumn
             visible: isCategorySeparator
             Layout.topMargin: 8
-            Layout.leftMargin: contentLeftMargin
+            Layout.leftMargin: categorySeparatorLeftMargin
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
 
