@@ -182,7 +182,12 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
     const auto modelIndex = index(resultIndex);
 
     const auto categoryId = data(modelIndex, CategoryIdRole).toString();
-    const auto categoryInfo = _resultsByCategory.value(categoryId, UnifiedSearchResultCategory());
+
+    const auto foundCategoryIt = std::find_if(std::begin(_resultsByCategory), std::end(_resultsByCategory),
+        [&categoryId](const UnifiedSearchResultCategory &current) { return current._id == categoryId; });
+
+    const auto categoryInfo =
+        foundCategoryIt != std::end(_resultsByCategory) ? *foundCategoryIt : UnifiedSearchResultCategory();
 
     if (!categoryInfo._id.isEmpty() && categoryInfo._id == categoryId) {
         const auto type = data(modelIndex, TypeRole).toUInt();
@@ -289,7 +294,28 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
         const auto entries = data.value(QStringLiteral("entries")).toVariant().toList();
 
         if (providerForResults != _providers.end() && !entries.isEmpty()) {
-            UnifiedSearchResultCategory &category = _resultsByCategory[(*providerForResults)._id];
+            const auto providerId = (*providerForResults)._id;
+            const auto foundCategoryIt = std::find_if(std::begin(_resultsByCategory), std::end(_resultsByCategory),
+                [&providerId](const UnifiedSearchResultCategory &current) { return current._id == providerId; });
+            const auto categoryInfo =
+                foundCategoryIt != std::end(_resultsByCategory) ? *foundCategoryIt : UnifiedSearchResultCategory();
+
+            auto categoryIt = [&providerId, this]() {
+                const auto it = std::find_if(std::begin(_resultsByCategory), std::end(_resultsByCategory),
+                    [&providerId](const UnifiedSearchResultCategory &current) { return current._id == providerId; });
+
+                if (it != std::end(_resultsByCategory)) {
+                    return it;
+                }
+
+                const UnifiedSearchResultCategory newCategory;
+
+                _resultsByCategory.push_back(newCategory);
+
+                return _resultsByCategory.end() - 1;
+            }();
+
+            UnifiedSearchResultCategory &category = *categoryIt;
 
             category._id = (*providerForResults)._id;
             category._name = (*providerForResults)._name;
@@ -386,7 +412,10 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                 combineResults();
             }
         } else if (entries.isEmpty() && providerForResults != _providers.end()) {
-            auto resultsForProvider = _resultsByCategory.find((*providerForResults)._id);
+            const auto providerId = (*providerForResults)._id;
+            const auto resultsForProvider = std::find_if(std::begin(_resultsByCategory), std::end(_resultsByCategory),
+                [&providerId](const UnifiedSearchResultCategory &current) { return current._id == providerId; });
+
             if (resultsForProvider != _resultsByCategory.end()) {
                 // we may have received false pagination information from the server, such as, we expect more results
                 // available via pagination, but, there are no more left, so, we need to stop paginating for this
@@ -444,6 +473,7 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
 }
 void UnifiedSearchResultsListModel::combineResults()
 {
+    qSort(_resultsByCategory.begin(), _resultsByCategory.end());
     QList<UnifiedSearchResult> resultsCombined;
     for (const auto &category : _resultsByCategory) {
         if (category._results.isEmpty()) {
@@ -486,9 +516,14 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(
             });
 
         if (foundLastResultForProviderReverse != std::rend(_resultsCombined)) {
-            const auto categoryInfo = _resultsByCategory.value(provider._id, UnifiedSearchResultCategory());
+            const auto providerId = provider._id;
+            const auto foundCategoryIt = std::find_if(std::begin(_resultsByCategory), std::end(_resultsByCategory),
+                [&providerId](const UnifiedSearchResultCategory &current) { return current._id == providerId; });
 
-            if (!categoryInfo._id.isEmpty() && categoryInfo._id == provider._id) {
+            const auto categoryInfo =
+                foundCategoryIt != std::end(_resultsByCategory) ? *foundCategoryIt : UnifiedSearchResultCategory();
+
+            if (foundCategoryIt != std::end(_resultsByCategory) && foundCategoryIt->_id == provider._id) {
                 const auto numRowsToInsert = results.size();
                 const auto foundLastResultForProvider = (foundLastResultForProviderReverse + 1).base();
                 const auto first = foundLastResultForProvider + 1 - std::begin(_resultsCombined);
@@ -496,7 +531,7 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(
                 beginInsertRows(QModelIndex(), first, last);
                 std::copy(std::begin(results), std::end(results),
                     std::inserter(_resultsCombined, foundLastResultForProvider + 1));
-                if (categoryInfo._isPaginated) {
+                if (foundCategoryIt->_isPaginated) {
                     const auto foundLastResultForProviderReverse = std::find_if(std::rbegin(_resultsCombined),
                         std::rend(_resultsCombined), [&provider](const UnifiedSearchResult &result) {
                             return result._categoryId == provider._id
@@ -504,7 +539,7 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(
                         });
                 }
                 endInsertRows();
-                if (!categoryInfo._isPaginated) {
+                if (!foundCategoryIt->_isPaginated) {
                     // Let's remove the FetchMoreTrigger item if present
                     const auto providerId = provider._id;
                     const auto foudFetchMoreTriggerForProviderReverse = std::find_if(std::rbegin(_resultsCombined),

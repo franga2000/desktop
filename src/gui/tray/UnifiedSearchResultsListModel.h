@@ -99,7 +99,7 @@ private:
     QString _searchTerm;
     QMap<QString, UnifiedSearchProvider> _providers;
     AccountState *_accountState;
-    QMap<QString, UnifiedSearchResultCategory> _resultsByCategory;
+    QList<UnifiedSearchResultCategory> _resultsByCategory;
     QList<UnifiedSearchResult> _resultsCombined;
 
     QString _errorString;
