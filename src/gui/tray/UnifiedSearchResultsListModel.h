@@ -74,7 +74,7 @@ public:
 
     bool isSearchInProgress() const;
 
-    Q_INVOKABLE void resultClicked(int resultIndex);
+    Q_INVOKABLE void resultClicked(const QString &providerId, const QString &resourceUrl);
     Q_INVOKABLE void fetchMoreTriggerClicked(const QString &providerId);
 
 public:
@@ -93,7 +93,7 @@ private slots:
 
 private:
     void startSearch();
-    void startSearchForProvider(const UnifiedSearchProvider &provider, qint32 cursor = -1);
+    void startSearchForProvider(const QString &providerId, qint32 cursor = -1);
 
     void combineResults(const QList<UnifiedSearchResult> &newEntries, const UnifiedSearchProvider &provider);
 

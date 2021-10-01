@@ -165,70 +165,39 @@ bool UnifiedSearchResultsListModel::isSearchInProgress() const
     return !_searchJobConnections.isEmpty();
 }
 
-void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
+void UnifiedSearchResultsListModel::resultClicked(const QString &providerId, const QString &resourceUrl)
 {
-    if (resultIndex < 0 || resultIndex >= _results.size()) {
+    if (isSearchInProgress() || providerId.isEmpty() || resourceUrl.isEmpty()) {
         return;
     }
 
-    if (isSearchInProgress()) {
-        return;
-    }
+    const auto resourceUrlFromString = QUrl(resourceUrl);
+    if (resourceUrlFromString.isValid()) {
+        if (providerId.contains("file")) {
+            const auto currentUser = UserModel::instance()->currentUser();
 
-    const auto modelIndex = index(resultIndex);
-
-    const auto categoryId = data(modelIndex, ProviderIdRole).toString();
-
-    const auto foundProviderIt = std::find_if(std::begin(_providers), std::end(_providers),
-        [&categoryId](const UnifiedSearchProvider &current) { return current._id == categoryId; });
-
-    const auto providerInfo = foundProviderIt != std::end(_providers) ? *foundProviderIt : UnifiedSearchProvider();
-
-    if (!providerInfo._id.isEmpty() && providerInfo._id == categoryId) {
-        const auto type = data(modelIndex, TypeRole).toUInt();
-
-        if (type == UnifiedSearchResult::Type::FetchMoreTrigger) {
-            if (providerInfo._isPaginated) {
-                // Load more items
-                const auto providerFound = _providers.find(providerInfo._name);
-                if (providerFound != _providers.end()) {
-                    _currentFetchMoreInProgressCategoryId = providerInfo._id;
-                    emit currentFetchMoreInProgressCategoryIdChanged();
-                    startSearchForProvider(*providerFound, providerInfo._cursor);
-                }
+            if (!currentUser || !currentUser->account()) {
+                return;
             }
-        } else {
-            const auto resourceUrl = QUrl(data(modelIndex, ResourceUrlRole).toString());
-            if (resourceUrl.isValid()) {
-                if (categoryId.contains("file")) {
-                    const auto currentUser = UserModel::instance()->currentUser();
 
-                    if (!currentUser || !currentUser->account()) {
+            const auto urlQuery = QUrlQuery(resourceUrlFromString);
+            const auto dir = urlQuery.queryItemValue(QStringLiteral("dir"), QUrl::ComponentFormattingOption::FullyDecoded);
+            const auto fileName = urlQuery.queryItemValue(QStringLiteral("scrollto"), QUrl::ComponentFormattingOption::FullyDecoded);
+
+            if (!dir.isEmpty() && !fileName.isEmpty()) {
+                const QString relativePath = dir + QLatin1Char('/') + fileName;
+                if (!relativePath.isEmpty()) {
+                    const auto localFiles = FolderMan::instance()->findFileInLocalFolders(
+                        QFileInfo(relativePath).path(), currentUser->account());
+
+                    if (!localFiles.isEmpty()) {
+                        QDesktopServices::openUrl(localFiles.constFirst());
                         return;
                     }
-
-                    const auto urlQuery = QUrlQuery(resourceUrl);
-                    const auto dir =
-                        urlQuery.queryItemValue(QStringLiteral("dir"), QUrl::ComponentFormattingOption::FullyDecoded);
-                    const auto fileName = urlQuery.queryItemValue(
-                        QStringLiteral("scrollto"), QUrl::ComponentFormattingOption::FullyDecoded);
-
-                    if (!dir.isEmpty() && !fileName.isEmpty()) {
-                        const QString relativePath = dir + QLatin1Char('/') + fileName;
-                        if (!relativePath.isEmpty()) {
-                            const auto localFiles = FolderMan::instance()->findFileInLocalFolders(
-                                QFileInfo(relativePath).path(), currentUser->account());
-
-                            if (!localFiles.isEmpty()) {
-                                QDesktopServices::openUrl(localFiles.constFirst());
-                                return;
-                            }
-                        }
-                    }
                 }
-                Utility::openBrowser(resourceUrl);
             }
         }
+        Utility::openBrowser(resourceUrl);
     }
 }
 
@@ -242,12 +211,9 @@ void UnifiedSearchResultsListModel::fetchMoreTriggerClicked(const QString &provi
     if (!providerInfo._id.isEmpty() && providerInfo._id == providerId) {
         if (providerInfo._isPaginated) {
             // Load more items
-            const auto providerFound = _providers.find(providerInfo._name);
-            if (providerFound != _providers.end()) {
-                _currentFetchMoreInProgressCategoryId = providerInfo._id;
-                emit currentFetchMoreInProgressCategoryIdChanged();
-                startSearchForProvider(*providerFound, providerInfo._cursor);
-            }
+            _currentFetchMoreInProgressCategoryId = providerId;
+            emit currentFetchMoreInProgressCategoryIdChanged();
+            startSearchForProvider(providerId, providerInfo._cursor);
         }
     }
 }
@@ -462,11 +428,11 @@ void UnifiedSearchResultsListModel::startSearch()
     endResetModel();
 
     for (const auto &provider : _providers) {
-        startSearchForProvider(provider);
+        startSearchForProvider(provider._id);
     }
 }
 
-void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchProvider &provider, qint32 cursor)
+void UnifiedSearchResultsListModel::startSearchForProvider(const QString &providerId, qint32 cursor)
 {
     const auto currentUser = UserModel::instance()->currentUser();
 
@@ -474,18 +440,18 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
         return;
     }
 
-    auto *job = new JsonApiJob(
-        currentUser->account(), QLatin1String("ocs/v2.php/search/providers/%1/search").arg(provider._id));
+    auto *job =
+        new JsonApiJob(currentUser->account(), QLatin1String("ocs/v2.php/search/providers/%1/search").arg(providerId));
     QUrlQuery params;
     params.addQueryItem(QStringLiteral("term"), _searchTerm);
     if (cursor > 0) {
         params.addQueryItem(QStringLiteral("cursor"), QString::number(cursor));
         job->setProperty("appendResults", true);
     }
-    job->setProperty("providerId", provider._id);
+    job->setProperty("providerId", providerId);
     job->addQueryParams(params);
     const auto wasSearchInProgress = isSearchInProgress();
-    _searchJobConnections.insert(provider._id,
+    _searchJobConnections.insert(providerId,
         QObject::connect(
             job, &JsonApiJob::jsonReceived, this, &UnifiedSearchResultsListModel::slotSearchForProviderFinished));
     if (isSearchInProgress() && !wasSearchInProgress) {

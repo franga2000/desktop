@@ -17,6 +17,7 @@ MouseArea {
 
     readonly property bool isFetchMoreTrigger: model.typeAsString === "FetchMoreTrigger"
     readonly property bool isCategorySeparator: model.typeAsString === "CategorySeparator"
+    readonly property bool isDefaultItem: model.typeAsString === "Default"
 
     property string currentFetchMoreInProgressCategoryId: ""
 
@@ -27,6 +28,15 @@ MouseArea {
     hoverEnabled: !isCategorySeparator && !isSearchInProgress
 
     height: !isCategorySeparator ? defaultHeight : defaultHeight / 2
+
+
+    onClicked: {
+        if (isFetchMoreTrigger) {
+            unifiedSearchResultsModel.fetchMoreTriggerClicked(model.providerId)
+        } else if (isDefaultItem) {
+            unifiedSearchResultsModel.resultClicked(model.providerId, model.resourceUrlRole)
+        }
+    }
 
     ToolTip {
         parent: unifiedSearchResultMouseArea

@@ -767,7 +767,6 @@ Window {
                 defaultHeight: Style.trayWindowHeaderHeight
                 currentFetchMoreInProgressCategoryId: unifiedSearchResultsModel.currentFetchMoreInProgressCategoryId
                 isSearchInProgress: unifiedSearchResultsModel.isSearchInProgress
-                onClicked: unifiedSearchResultsModel.resultClicked(model.index)
             }
         }
     }       // Rectangle trayWindowBackground
