@@ -15,9 +15,12 @@
 #ifndef UNIFIEDSEARHRESULT_H
 #define UNIFIEDSEARHRESULT_H
 
+#include <limits>
+
 #include <QtCore>
 
 namespace OCC {
+
 /**
  * @brief The UnifiedSearchResult class
  */
@@ -39,7 +42,7 @@ public:
     bool _isRounded = false;
     QString _categoryName;
     QString _icon;
-    qint32 _order = INT32_MAX;
+    qint32 _order = std::numeric_limits<quint32>::max();
     QString _thumbnailUrl;
     QString _imagePlaceholder;
     QString _resourceUrl;

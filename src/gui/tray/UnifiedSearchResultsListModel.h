@@ -15,13 +15,13 @@
 #ifndef UNIFIEDSEARCHRESULTSLISTMODEL_H
 #define UNIFIEDSEARCHRESULTSLISTMODEL_H
 
-#include <QtCore>
-
 #include "UnifiedSearchResult.h"
 
-namespace OCC {
+#include <limits>
 
-class AccountState;
+#include <QtCore>
+
+namespace OCC {
 
 /**
  * @brief The UnifiedSearchResultsListModel
@@ -35,7 +35,8 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
     Q_OBJECT
 
     Q_PROPERTY(bool isSearchInProgress READ isSearchInProgress NOTIFY isSearchInProgressChanged)
-    Q_PROPERTY(QString currentFetchMoreInProgressCategoryId MEMBER _currentFetchMoreInProgressCategoryId NOTIFY currentFetchMoreInProgressCategoryIdChanged)
+    Q_PROPERTY(QString currentFetchMoreInProgressCategoryId MEMBER _currentFetchMoreInProgressCategoryId NOTIFY
+            currentFetchMoreInProgressCategoryIdChanged)
     Q_PROPERTY(QString errorString MEMBER _errorString NOTIFY errorStringChanged)
     Q_PROPERTY(QString searchTerm READ searchTerm WRITE setSearchTerm NOTIFY searchTermChanged)
 
@@ -47,7 +48,7 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
         qint32 _cursor = -1;
         qint32 _pageSize = -1;
         bool _isPaginated = false;
-        qint32 _order = INT32_MAX;
+        qint32 _order = std::numeric_limits<quint32>::max();
     };
 
 public:
@@ -56,17 +57,15 @@ public:
         CategoryIdRole,
         ImagePlaceholderRole,
         ImagesRole,
-        IconRole,
         TitleRole,
         SublineRole,
         ResourceUrlRole,
         RoundedRole,
-        ThumbnailUrlRole,
         TypeRole,
         TypeAsStringRole,
     };
 
-    explicit UnifiedSearchResultsListModel(AccountState *accountState, QObject *parent = nullptr);
+    explicit UnifiedSearchResultsListModel(QObject *parent = nullptr);
 
     QVariant data(const QModelIndex &index, int role) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -78,7 +77,8 @@ public:
 
     Q_INVOKABLE void resultClicked(int resultIndex);
 
-public: signals:
+public:
+signals:
     void currentFetchMoreInProgressCategoryIdChanged();
     void isSearchInProgressChanged();
     void errorStringChanged();
@@ -89,7 +89,6 @@ protected:
 
 private slots:
     void slotSearchTermEditingFinished();
-
     void slotSearchForProviderFinished(const QJsonDocument &json, int statusCode);
 
 private:
@@ -104,7 +103,6 @@ private:
     QTimer _unifiedSearchTextEditingFinishedTimer;
     QString _searchTerm;
     QMap<QString, UnifiedSearchProvider> _providers;
-    AccountState *_accountState;
     QList<UnifiedSearchResult> _resultsCombined;
 
     QString _errorString;

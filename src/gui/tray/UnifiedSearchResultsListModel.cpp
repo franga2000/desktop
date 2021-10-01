@@ -28,9 +28,8 @@
 
 namespace OCC {
 
-UnifiedSearchResultsListModel::UnifiedSearchResultsListModel(AccountState *accountState, QObject *parent)
+UnifiedSearchResultsListModel::UnifiedSearchResultsListModel(QObject *parent)
     : QAbstractListModel(parent)
-    , _accountState(accountState)
 {
 }
 
@@ -68,17 +67,11 @@ QVariant UnifiedSearchResultsListModel::data(const QModelIndex &index, int role)
     case ImagesRole: {
         return _resultsCombined.at(index.row())._images;
     }
-    case IconRole: {
-        return _resultsCombined.at(index.row())._icon;
-    }
     case TitleRole: {
         return _resultsCombined.at(index.row())._title;
     }
     case SublineRole: {
         return _resultsCombined.at(index.row())._subline;
-    }
-    case ThumbnailUrlRole: {
-        return _resultsCombined.at(index.row())._thumbnailUrl;
     }
     case ResourceUrlRole: {
         return _resultsCombined.at(index.row())._resourceUrl;
@@ -111,8 +104,6 @@ QHash<int, QByteArray> UnifiedSearchResultsListModel::roleNames() const
     roles[ImagePlaceholderRole] = "imagePlaceholder";
     roles[TitleRole] = "resultTitle";
     roles[SublineRole] = "subline";
-    roles[ResourceUrlRole] = "resourceUrl";
-    roles[ThumbnailUrlRole] = "thumbnailUrl";
     roles[TypeRole] = "type";
     roles[TypeAsStringRole] = "typeAsString";
     roles[RoundedRole] = "isRounded";
@@ -151,16 +142,14 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
             &UnifiedSearchResultsListModel::slotSearchTermEditingFinished);
         _unifiedSearchTextEditingFinishedTimer.start();
     } else {
-        for (auto &connection : _searchJobConnections) {
-            if (connection) {
-                QObject::disconnect(connection);
+        if (!_searchJobConnections.isEmpty()) {
+            for (const auto &connection : _searchJobConnections) {
+                if (connection) {
+                    QObject::disconnect(connection);
+                }
             }
-        }
 
-        const auto numSearchJobConections = _searchJobConnections.size();
-        _searchJobConnections.clear();
-
-        if (numSearchJobConections > 0) {
+            _searchJobConnections.clear();
             emit isSearchInProgressChanged();
         }
 
@@ -172,7 +161,7 @@ void UnifiedSearchResultsListModel::setSearchTerm(const QString &term)
 
 bool UnifiedSearchResultsListModel::isSearchInProgress() const
 {
-    return _searchJobConnections.size() > 0;
+    return !_searchJobConnections.isEmpty();
 }
 
 void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
@@ -211,6 +200,12 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
             const auto resourceUrl = QUrl(data(modelIndex, ResourceUrlRole).toString());
             if (resourceUrl.isValid()) {
                 if (categoryId.contains("file")) {
+                    const auto currentUser = UserModel::instance()->currentUser();
+
+                    if (!currentUser || !currentUser->account()) {
+                        return;
+                    }
+
                     const auto urlQuery = QUrlQuery(resourceUrl);
                     const auto dir = urlQuery.queryItemValue(QStringLiteral("dir"), QUrl::ComponentFormattingOption::FullyDecoded);
                     const auto fileName = urlQuery.queryItemValue(QStringLiteral("scrollto"), QUrl::ComponentFormattingOption::FullyDecoded);
@@ -218,7 +213,7 @@ void UnifiedSearchResultsListModel::resultClicked(int resultIndex)
                     if (!dir.isEmpty() && !fileName.isEmpty()) {
                         const QString relativePath = dir + QLatin1Char('/') + fileName;
                         if (!relativePath.isEmpty()) {
-                            const auto localFiles = FolderMan::instance()->findFileInLocalFolders(QFileInfo(relativePath).path(), _accountState->account());
+                            const auto localFiles = FolderMan::instance()->findFileInLocalFolders(QFileInfo(relativePath).path(), currentUser->account());
 
                             if (!localFiles.isEmpty()) {
                                 QDesktopServices::openUrl(localFiles.constFirst());
@@ -239,7 +234,12 @@ void UnifiedSearchResultsListModel::slotSearchTermEditingFinished()
         &UnifiedSearchResultsListModel::slotSearchTermEditingFinished);
 
     if (_providers.isEmpty()) {
-        auto *job = new JsonApiJob(_accountState->account(), QLatin1String("ocs/v2.php/search/providers"));
+        const auto currentUser = UserModel::instance()->currentUser();
+
+        if (!currentUser || !currentUser->account()) {
+            return;
+        }
+        auto *job = new JsonApiJob(currentUser->account(), QLatin1String("ocs/v2.php/search/providers"));
         QObject::connect(job, &JsonApiJob::jsonReceived, [&, this](const QJsonDocument &json, int statusCode) {
             if (statusCode != 200) {
                 _errorString += tr("Failed to fetch search providers for '%1'. Error: %2").arg(_searchTerm).arg(job->errorString()) + QLatin1Char('\n');
@@ -283,11 +283,13 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
     if (const auto job = qobject_cast<JsonApiJob *>(sender())) {
         appendResults = job->property("appendResults").toBool();
         const auto providerId = job->property("providerId").toString();
-        const auto numJobConnections = _searchJobConnections.size();
-        _searchJobConnections.remove(providerId);
+        
+        if (!_searchJobConnections.isEmpty()) {
+            _searchJobConnections.remove(providerId);
 
-        if (numJobConnections != 0 && _searchJobConnections.size() == 0) {
-            emit isSearchInProgressChanged();
+            if (_searchJobConnections.isEmpty()) {
+                emit isSearchInProgressChanged();
+            }
         }
 
         if (!_currentFetchMoreInProgressCategoryId.isEmpty()) {
@@ -441,8 +443,13 @@ void UnifiedSearchResultsListModel::startSearch()
 
 void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchProvider &provider, qint32 cursor)
 {
-    auto *job = new JsonApiJob(
-        _accountState->account(), QLatin1String("ocs/v2.php/search/providers/%1/search").arg(provider._id));
+    const auto currentUser = UserModel::instance()->currentUser();
+
+    if (!currentUser || !currentUser->account()) {
+        return;
+    }
+
+    auto *job = new JsonApiJob(currentUser->account(), QLatin1String("ocs/v2.php/search/providers/%1/search").arg(provider._id));
     QUrlQuery params;
     params.addQueryItem(QStringLiteral("term"), _searchTerm);
     if (cursor > 0) {
@@ -451,11 +458,11 @@ void UnifiedSearchResultsListModel::startSearchForProvider(const UnifiedSearchPr
     }
     job->setProperty("providerId", provider._id);
     job->addQueryParams(params);
-    const auto numSearchJobConnections = _searchJobConnections.size();
+    const auto wasSearchInProgress = isSearchInProgress();
     _searchJobConnections.insert(provider._id,
         QObject::connect(
             job, &JsonApiJob::jsonReceived, this, &UnifiedSearchResultsListModel::slotSearchForProviderFinished));
-    if (_searchJobConnections.size() > 0 && numSearchJobConnections == 0) {
+    if (isSearchInProgress() && !wasSearchInProgress) {
         emit isSearchInProgressChanged();
     }
     job->start();

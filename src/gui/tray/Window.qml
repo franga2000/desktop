@@ -49,6 +49,8 @@ Window {
         target: UserModel
         function onNewUserSelected() {
             accountMenu.close();
+            trayWindowUnifiedSearchTextField.text = ""
+            unifiedSearchResultsModel.searchTerm = trayWindowUnifiedSearchTextField.text
         }
     }
 
