@@ -23,6 +23,8 @@
 
 namespace OCC {
 
+Q_DECLARE_LOGGING_CATEGORY(lcUnifiedSearch)
+
 /**
  * @brief The UnifiedSearchResultsListModel
  * @ingroup gui
@@ -44,10 +46,10 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
     public:
         QString _id;
         QString _name;
-        qint32 _cursor = -1;
-        qint32 _pageSize = -1;
+        qint32 _cursor = -1; // current pagination value
+        qint32 _pageSize = -1; // how many max items per step of pagination
         bool _isPaginated = false;
-        qint32 _order = std::numeric_limits<quint32>::max();
+        qint32 _order = std::numeric_limits<quint32>::max(); // sorting order (smaller number has bigger priority)
     };
 
 public:
@@ -95,9 +97,11 @@ private:
     void startSearch();
     void startSearchForProvider(const QString &providerId, qint32 cursor = -1);
 
-    void combineResults(const QList<UnifiedSearchResult> &newEntries, const UnifiedSearchProvider &provider);
+    // append initial search results to the list
+    void appendResults(QList<UnifiedSearchResult> results, const UnifiedSearchProvider &provider);
 
-    void appendResultsToProvider(const UnifiedSearchProvider &provider, const QList<UnifiedSearchResult> &results);
+    // append pagination results to existing results from the initial search
+    void appendResultsToProvider(const QList<UnifiedSearchResult> &results, const UnifiedSearchProvider &provider);
 
 private:
     QMap<QString, UnifiedSearchProvider> _providers;

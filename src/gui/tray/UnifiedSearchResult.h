@@ -30,11 +30,7 @@ namespace OCC {
 class UnifiedSearchResult
 {
 public:
-    enum Type : quint8 {
-        Default = 0,
-        CategorySeparator,
-        FetchMoreTrigger
-    };
+    enum Type : quint8 { Default = 0, CategorySeparator, FetchMoreTrigger };
 
     static QString typeAsString(UnifiedSearchResult::Type type);
 

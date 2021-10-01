@@ -42,6 +42,7 @@ MouseArea {
         parent: unifiedSearchResultMouseArea
         visible: !unifiedSearchResultMouseArea.isCategorySeparator && unifiedSearchResultMouseArea.containsMouse
         text: isFetchMoreTrigger ? qsTr("Load more results") : model.resultTitle + "\n\n" + model.subline
+        delay: 1000
     }
 
     Rectangle {
