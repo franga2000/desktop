@@ -590,7 +590,7 @@ Window {
                     anchors.margins: 10
 
                     leftPadding: trayWindowUnifiedSearchTextFieldSearchIcon.width + trayWindowUnifiedSearchTextFieldSearchIcon.anchors.leftMargin + textFieldHorizontalPaddingOffset
-                    rightPadding: trayWindowUnifiedSearchTextFieldClearText.width + trayWindowUnifiedSearchTextFieldClearText.anchors.rightMargin + textFieldHorizontalPaddingOffset
+                    rightPadding: trayWindowUnifiedSearchTextFieldClearTextButton.width + trayWindowUnifiedSearchTextFieldClearTextButton.anchors.rightMargin + textFieldHorizontalPaddingOffset
 
                     placeholderText: qsTr("Search files, messages, events...")
 
