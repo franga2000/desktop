@@ -23,6 +23,8 @@ namespace OCC {
 
 /**
  * @brief The UnifiedSearchResult class
+ * @ingroup gui
+ * Simple data structure that represents single Unified Search result
  */
 
 class UnifiedSearchResult
@@ -38,20 +40,14 @@ public:
 
     QString _title;
     QString _subline;
-    QString _categoryId;
+    QString _providerId;
+    QString _providerName;
     bool _isRounded = false;
-    QString _categoryName;
-    QString _icon;
     qint32 _order = std::numeric_limits<quint32>::max();
-    QString _thumbnailUrl;
-    QString _imagePlaceholder;
     QString _resourceUrl;
-    QString _images;
+    QString _icons;
     Type _type = Type::Default;
 };
-
-bool operator==(const UnifiedSearchResult &rhs, const UnifiedSearchResult &lhs);
-bool operator<(const UnifiedSearchResult &rhs, const UnifiedSearchResult &lhs);
 }
 
 #endif // UNIFIEDSEARHRESULT_H

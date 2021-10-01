@@ -26,7 +26,6 @@ namespace OCC {
 /**
  * @brief The UnifiedSearchResultsListModel
  * @ingroup gui
- *
  * Simple list model to provide the list view with data for the Unified Search results.
  */
 
@@ -53,10 +52,10 @@ class UnifiedSearchResultsListModel : public QAbstractListModel
 
 public:
     enum DataRole {
-        CategoryNameRole = Qt::UserRole + 1,
-        CategoryIdRole,
+        ProviderNameRole = Qt::UserRole + 1,
+        ProviderIdRole,
         ImagePlaceholderRole,
-        ImagesRole,
+        IconsRole,
         TitleRole,
         SublineRole,
         ResourceUrlRole,
@@ -76,6 +75,7 @@ public:
     bool isSearchInProgress() const;
 
     Q_INVOKABLE void resultClicked(int resultIndex);
+    Q_INVOKABLE void fetchMoreTriggerClicked(const QString &providerId);
 
 public:
 signals:
@@ -100,16 +100,17 @@ private:
     void appendResultsToProvider(const UnifiedSearchProvider &provider, const QList<UnifiedSearchResult> &results);
 
 private:
-    QTimer _unifiedSearchTextEditingFinishedTimer;
-    QString _searchTerm;
     QMap<QString, UnifiedSearchProvider> _providers;
-    QList<UnifiedSearchResult> _resultsCombined;
+    QList<UnifiedSearchResult> _results;
 
+    QString _searchTerm;
     QString _errorString;
 
     QString _currentFetchMoreInProgressCategoryId;
 
     QMap<QString, QMetaObject::Connection> _searchJobConnections;
+
+    QTimer _unifiedSearchTextEditingFinishedTimer;
 };
 }
 
