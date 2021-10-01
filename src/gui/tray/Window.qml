@@ -574,7 +574,7 @@ Window {
                 TextField {
                     id: trayWindowUnifiedSearchTextField
 
-                    text: UserModel.searchTerm
+                    text: unifiedSearchResultsModel.searchTerm
 
                     readOnly: !UserModel.currentUser.isConnected || unifiedSearchResultsModel.currentFetchMoreInProgressCategoryId
 
@@ -656,7 +656,7 @@ Window {
 
                             onClicked: {
                                 trayWindowUnifiedSearchTextField.text = ""
-                                UserModel.onUnifiedSearchTextEdited(trayWindowUnifiedSearchTextField.text)
+                                unifiedSearchResultsModel.searchTerm = trayWindowUnifiedSearchTextField.text
                             }
                         }
                     }
@@ -693,13 +693,15 @@ Window {
                         loops: Animation.Infinite
                         duration: 1250
                     }
-                    onTextEdited: UserModel.onUnifiedSearchTextEdited(text)
+                    onTextEdited: {
+                        unifiedSearchResultsModel.searchTerm = text
+                    }
                 }
             }
         }
         ListView {
             id: activityListView
-            visible: !unifiedSearchResultsListView.visible && UserModel.searchTerm === ""
+            visible: !unifiedSearchResultsErrorLabel.visible && !unifiedSearchResultsListView.visible && unifiedSearchResultsModel.searchTerm === ""
             anchors.top: trayWindowUnifiedSearchContainer.bottom
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
@@ -725,6 +727,19 @@ Window {
             }
         }
 
+        Label {
+            id: unifiedSearchResultsErrorLabel
+            visible: unifiedSearchResultsModel.errorString && !unifiedSearchResultsListView.visible && !unifiedSearchResultsModel.isSearchInProgress && !unifiedSearchResultsModel.currentFetchMoreInProgressCategoryId
+            text: unifiedSearchResultsModel.errorString
+            color: "red"
+            anchors.top: trayWindowUnifiedSearchContainer.bottom
+            anchors.left: trayWindowBackground.left
+            anchors.right: trayWindowBackground.right
+            anchors.bottom: trayWindowBackground.bottom
+            anchors.margins: 10
+            wrapMode: Text.Wrap
+        }
+
         ListView {
             id: unifiedSearchResultsListView
             anchors.top: trayWindowUnifiedSearchContainer.bottom
@@ -732,7 +747,7 @@ Window {
             anchors.right: trayWindowBackground.right
             anchors.bottom: trayWindowBackground.bottom
             spacing: 4
-            visible: count > 0
+            visible: count > 0 || unifiedSearchResultsModel.isSearchInProgress
             clip: true
             ScrollBar.vertical: ScrollBar {
                 id: unifiedSearchResultsListViewScrollbar
