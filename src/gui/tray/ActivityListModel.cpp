@@ -24,6 +24,7 @@
 #include "accountmanager.h"
 #include "conflictdialog.h"
 #include "folderman.h"
+#include "iconjob.h"
 #include "accessmanager.h"
 #include "owncloudgui.h"
 #include "guiutility.h"
