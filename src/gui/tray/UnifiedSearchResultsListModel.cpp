@@ -602,13 +602,6 @@ void UnifiedSearchResultsListModel::appendResultsToProvider(
             const auto last = first + numRowsToInsert - 1;
             beginInsertRows(QModelIndex(), first, last);
             std::copy(std::begin(results), std::end(results), std::inserter(_results, itLastResultForProvider + 1));
-            if (provider._isPaginated) {
-                const auto foundLastResultForProviderReverse = std::find_if(
-                    std::rbegin(_results), std::rend(_results), [&providerId](const UnifiedSearchResult &result) {
-                        return result._providerId == providerId
-                            && result._type == UnifiedSearchResult::Type::FetchMoreTrigger;
-                    });
-            }
             endInsertRows();
 
             // #2 Remove the FetchMoreTrigger item if present and provider is not paginated anymore
