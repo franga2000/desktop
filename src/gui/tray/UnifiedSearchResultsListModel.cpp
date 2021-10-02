@@ -43,7 +43,7 @@ static QString imagePlaceholderUrlForProviderId(const QString &providerId)
         return QStringLiteral("qrc:///client/theme/account.svg");
     }
 
-    return QStringLiteral("");
+    return QStringLiteral("qrc:///client/theme/change.svg");
 }
 
 static QString iconUrlForDefaultIconName(const QString &defaultIconName)

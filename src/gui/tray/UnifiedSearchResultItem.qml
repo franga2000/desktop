@@ -99,12 +99,12 @@ MouseArea {
             }
             Image {
                 id: unifiedSearchResultThumbnailPlaceholder
-                visible: model.icons && unifiedSearchResultThumbnail.status != Image.Ready
+                visible: model.icons && model.imagePlaceholder && unifiedSearchResultThumbnail.status != Image.Ready
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.leftMargin: iconLeftMargin
                 verticalAlignment: Qt.AlignCenter
                 cache: true
-                source: model.imagePlaceholder ? imagePlaceholder : "qrc:///client/theme/change.svg"
+                source: model.imagePlaceholder
                 sourceSize.height: unifiedSearchResultImageContainer.iconWidth
                 sourceSize.width: unifiedSearchResultImageContainer.iconWidth
                 Layout.preferredWidth: visible ? unifiedSearchResultImageContainer.iconWidth : 0
