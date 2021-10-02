@@ -70,7 +70,7 @@ public:
 public slots:
     void slotDeleteShareFetched();
     void slotToggleShareLinkAnimation(const bool start);
-    void toggleButtonAnimation(QToolButton *button, QProgressIndicator *progressIndicator, const QAction *checkedAction, const bool start);
+    void toggleButtonAnimation(QToolButton *button, QProgressIndicator *progressIndicator, const QAction *checkedAction);
     void slotServerError(const int code, const QString &message);
     void slotCreateShareRequiresPassword(const QString &message);
     void slotStyleChanged();
