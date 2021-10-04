@@ -40,7 +40,7 @@ public:
     QString _providerName;
     bool _isRounded = false;
     qint32 _order = std::numeric_limits<quint32>::max();
-    QString _resourceUrl;
+    QUrl _resourceUrl;
     QString _icons;
     Type _type = Type::Default;
 };

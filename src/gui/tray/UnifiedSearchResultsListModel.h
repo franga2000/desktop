@@ -78,7 +78,7 @@ public:
 
     bool isSearchInProgress() const;
 
-    Q_INVOKABLE void resultClicked(const QString &providerId, const QString &resourceUrl);
+    Q_INVOKABLE void resultClicked(const QString &providerId, const QUrl &resourceUrl);
     Q_INVOKABLE void fetchMoreTriggerClicked(const QString &providerId);
 
 public:

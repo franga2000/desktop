@@ -47,7 +47,24 @@ static QString imagePlaceholderUrlForProviderId(const QString &providerId)
 }
 
 static QString iconUrlForDefaultIconName(const QString &defaultIconName)
-{
+{    if (defaultIconName.startsWith(QStringLiteral("icon-"))) {
+        const auto parts = defaultIconName.split(QLatin1Char('-'));
+
+        if (parts.size() > 1) {
+            const QString iconFilePath = QStringLiteral(":/client/theme/") + parts[1] + QStringLiteral(".svg");
+
+            if (QFile(iconFilePath).exists()) {
+                return iconFilePath;
+            }
+
+            const QString blackIconFilePath = QStringLiteral(":/client/theme/black/") + parts[1] + QStringLiteral(".svg");
+
+            if (QFile(blackIconFilePath).exists()) {
+                return blackIconFilePath;
+            }
+        }
+    }
+
     const QUrl urlForIcon(defaultIconName);
 
     if (!urlForIcon.isValid() || urlForIcon.scheme().isEmpty()) {
@@ -65,7 +82,7 @@ static QString iconUrlForDefaultIconName(const QString &defaultIconName)
         }
     }
 
-    return QStringLiteral("");
+    return QStringLiteral(":/client/theme/change.svg");
 }
 
 static QString iconsFromThumbnailAndFallbackIcon(QString thumbnailUrl, QString fallackIcon, QUrl serverUrl)
@@ -255,20 +272,19 @@ bool UnifiedSearchResultsListModel::isSearchInProgress() const
     return !_searchJobConnections.isEmpty();
 }
 
-void UnifiedSearchResultsListModel::resultClicked(const QString &providerId, const QString &resourceUrl)
+void UnifiedSearchResultsListModel::resultClicked(const QString &providerId, const QUrl &resourceUrl)
 {
     if (isSearchInProgress() || providerId.isEmpty() || resourceUrl.isEmpty()) {
         return;
     }
 
-    const auto resourceUrlFromString = QUrl(resourceUrl);
-    if (resourceUrlFromString.isValid()) {
+    if (resourceUrl.isValid()) {
         if (providerId.contains(QStringLiteral("file"), Qt::CaseInsensitive)) {
             if (!_accountState || !_accountState->account()) {
                 return;
             }
 
-            const auto urlQuery = QUrlQuery(resourceUrlFromString);
+            const auto urlQuery = QUrlQuery(resourceUrl);
             const auto dir =
                 urlQuery.queryItemValue(QStringLiteral("dir"), QUrl::ComponentFormattingOption::FullyDecoded);
             const auto fileName =
@@ -434,7 +450,15 @@ void UnifiedSearchResultsListModel::slotSearchForProviderFinished(const QJsonDoc
                     result._isRounded = entryMap.value(QStringLiteral("rounded")).toBool();
                     result._title = entryMap.value(QStringLiteral("title")).toString();
                     result._subline = entryMap.value(QStringLiteral("subline")).toString();
-                    result._resourceUrl = entryMap.value(QStringLiteral("resourceUrl")).toString();
+                    const auto resourceUrl = entryMap.value(QStringLiteral("resourceUrl")).toString();
+                    result._resourceUrl = [this, &resourceUrl]() {
+                        QUrl result(resourceUrl);
+                        if (result.scheme().isEmpty()) {
+                            result = _serverUrl;
+                            result.setPath(resourceUrl);
+                        }
+                        return result;
+                    }();
                     result._icons =
                         iconsFromThumbnailAndFallbackIcon(entryMap.value(QStringLiteral("thumbnailUrl")).toString(),
                             entryMap.value(QStringLiteral("icon")).toString(), _serverUrl);
