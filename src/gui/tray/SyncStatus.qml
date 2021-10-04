@@ -6,109 +6,104 @@ import Style 1.0
 
 import com.nextcloud.desktopclient 1.0 as NC
 
-Item {
-    id: item
+RowLayout {
+    id: layout
 
-    property var model: NC.SyncStatusModel {}
+    property alias model: syncStatusModel
 
-    implicitHeight: layout.height
+    spacing: 0
 
-    RowLayout {
-        id: layout
+    NC.SyncStatusModel {
+        id: syncStatusModel
+    }
 
-        Layout.alignment: Qt.AlignLeft
+    Image {
+        id: syncIcon
 
-        width: item.width
-        spacing: 0
+        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        Layout.topMargin: 16
+        Layout.bottomMargin: 16
+        Layout.leftMargin: 16
 
-        Image {
-            id: syncIcon
+        source: syncStatusModel.syncIcon
+        sourceSize.width: 32
+        sourceSize.height: 32
+    }
 
-            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-            Layout.topMargin: 16
-            Layout.bottomMargin: 16
-            Layout.leftMargin: 16
+    Item {
+        id: containerItem
 
-            source: model.syncIcon
-            sourceSize.width: 32
-            sourceSize.height: 32
-        }
+        Layout.alignment: Qt.AlignVCenter
+        Layout.leftMargin: 10
+        Layout.fillWidth: true
+        Layout.fillHeight: true
 
-        Item {
-            id: containerItem
+        ColumnLayout {
+            id: columnLayout
 
-            Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: 10
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.verticalCenter: containerItem.verticalCenter
 
-            ColumnLayout {
-                id: columnLayout
+            spacing: 0
 
-                anchors.verticalCenter: containerItem.verticalCenter
+            Text {
+                id: syncStatusText
 
-                spacing: 0
-
-                Text {
-                    id: syncStatusText
-
-                    text: model.syncStatusString
-                    visible: !model.syncing
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: Style.topLinePixelSize
-                    font.bold: true
-                }
-
-                Text {
-                    id: syncStatusDetailText
-
-                    text: model.syncStatusDetailString
-                    visible: !model.syncing && model.syncStatusDetailString !== ""
-                    color: "#808080"
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: Style.subLinePixelSize
-                }
+                text: syncStatusModel.syncStatusString
+                visible: !syncStatusModel.syncing
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: Style.topLinePixelSize
+                font.bold: true
             }
 
-            ColumnLayout {
-                id: syncProgressLayout
+            Text {
+                id: syncStatusDetailText
 
-                anchors.fill: parent
+                text: syncStatusModel.syncStatusDetailString
+                visible: !syncStatusModel.syncing && syncStatusModel.syncStatusDetailString !== ""
+                color: "#808080"
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: Style.subLinePixelSize
+            }
+        }
 
-                Text {
-                    id: syncProgressText
-                    
-                    Layout.topMargin: 8
-                    Layout.fillWidth: true
+        ColumnLayout {
+            id: syncProgressLayout
 
-                    text: model.syncStatusString
-                    visible: model.syncing
-                    verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: Style.topLinePixelSize
-                    font.bold: true
-                }
+            anchors.fill: parent
 
-                ProgressBar {
-                    id: syncProgressBar
+            Text {
+                id: syncProgressText
+                
+                Layout.topMargin: 8
+                Layout.fillWidth: true
 
-                    Layout.rightMargin: 16
-                    Layout.fillWidth: true
+                text: syncStatusModel.syncStatusString
+                visible: syncStatusModel.syncing
+                verticalAlignment: Text.AlignVCenter
+                font.pixelSize: Style.topLinePixelSize
+                font.bold: true
+            }
 
-                    value: model.syncProgress
-                    visible: model.syncing
-                }
+            ProgressBar {
+                id: syncProgressBar
 
-                Text {
-                    id: syncProgressDetailText
+                Layout.rightMargin: 16
+                Layout.fillWidth: true
 
-                    Layout.bottomMargin: 8
-                    Layout.fillWidth: true
+                value: syncStatusModel.syncProgress
+                visible: syncStatusModel.syncing
+            }
 
-                    text: model.syncString
-                    visible: model.syncing
-                    color: "#808080"
-                    font.pixelSize: Style.subLinePixelSize
-                }
+            Text {
+                id: syncProgressDetailText
+
+                Layout.bottomMargin: 8
+                Layout.fillWidth: true
+
+                text: syncStatusModel.syncString
+                visible: syncStatusModel.syncing
+                color: "#808080"
+                font.pixelSize: Style.subLinePixelSize
             }
         }
     }
